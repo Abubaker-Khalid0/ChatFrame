@@ -1,0 +1,18 @@
+# Dependencies and build output
+node_modules
+dist
+build
+out
+coverage
+pnpm-lock.yaml
+*.tsbuildinfo
+
+# Spec Kit framework and tooling (not project source)
+.agents
+.kiro
+.specify
+
+# Generated / authored documentation and spec artifacts (not code style)
+docs
+specs
+*.md
