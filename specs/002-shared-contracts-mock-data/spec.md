@@ -6,6 +6,16 @@
 
 **Status**: Draft
 
+## Clarifications
+
+### Session 2026-06-09
+
+- Q: How should the application determine whether to use the mock adapter vs the real messaging adapter? → A: Mock mode is toggled via an environment variable (e.g., MOCK_MODE=true).
+- Q: How many synthetic one-to-one chats should the mock fixture include? → A: 8 mock chats to test list layout, search, timestamps, and varied names.
+- Q: How many messages should the synthetic mock conversation contain? → A: 50–80 messages, enough to demonstrate scrolling, date separators, and all message types.
+- Q: Should the mock data use culturally authentic Arabic/English names and realistic message content? → A: Yes, use culturally authentic names and realistic content for believable demos and QA.
+- Q: Should the mock adapter simulate realistic delays or return data instantly? → A: Return data instantly; simulated delays can be added later if needed.
+
 **Input**: User description: "Phase 2 — Shared Contracts and Mock Data: Define all project-owned data shapes and validation rules in a shared location so that the local service and the user interface always agree on the structure of chats, messages, import status, export settings, and quality information. Create a synthetic mock conversation and a mock integration adapter so the full application flow can be developed, demonstrated, and tested without connecting to any real messaging service."
 
 ## User Scenarios & Testing *(mandatory)*
@@ -196,10 +206,12 @@ image placeholders.
   to send, edit, or delete messages (read-only contract).
 - **FR-006**: A mock adapter MUST implement the messaging adapter interface
   using synthetic fixture data, enabling the full application flow without
-  a real messaging connection.
-- **FR-007**: The mock adapter MUST return synthetic chat summaries when
-  asked for private chats, and synthetic messages when asked for a
-  conversation — matching the shapes defined in FR-001.
+  a real messaging connection. The mock adapter MUST return data instantly
+  without simulating network delays.
+- **FR-007**: The mock adapter MUST return 8 synthetic one-to-one chat
+  summaries when asked for private chats, and a synthetic conversation of
+  50–80 messages when asked for a conversation — matching the shapes
+  defined in FR-001.
 - **FR-008**: The local service MUST expose mock endpoints that serve
   synthetic data (chat list, conversation preview) to the user interface.
 - **FR-009**: The user interface MUST connect to the local service and
@@ -221,6 +233,16 @@ image placeholders.
   local service.
 - **FR-014**: The application MUST NOT include any telemetry, analytics,
   remote logging, or crash reporting.
+- **FR-015**: The application MUST select between the mock adapter and the
+  real adapter based on an environment variable, so that mock mode can be
+  activated without changing source code.
+- **FR-016**: All synthetic fixture data — including chat names, phone
+  numbers, message content, and timestamps — MUST use culturally authentic
+  Arabic and English values to produce realistic, believable demos and
+  QA sessions.
+- **FR-017**: The mock adapter MUST support at least 8 synthetic one-to-one
+  chats with varied contact names, phone numbers, and last-message
+  timestamps to enable meaningful search and list layout testing.
 
 ### Key Entities *(include if feature involves data)*
 
@@ -281,6 +303,13 @@ image placeholders.
 - The mock adapter simulates a realistic but not exhaustive conversation —
   it is designed to cover rendering and processing edge cases, not to
   replicate the full volume or complexity of a real WhatsApp conversation.
+- The mock conversation contains 50–80 messages and the mock chat list
+  contains 8 chats, sized for scenario coverage and visual testing rather
+  than stress testing.
+- The mock adapter returns data instantly without simulating delays;
+  delay simulation may be added later for UX testing if needed.
+- Mock mode is controlled via an environment variable; no source code
+  changes are needed to switch between mock and real adapters.
 - The messaging adapter interface defined here is the contract for all
   future real integrations; the first real adapter (connecting to WhatsApp)
   will be built in a later phase.
