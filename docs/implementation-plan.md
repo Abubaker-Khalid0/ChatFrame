@@ -1,34 +1,43 @@
 # ChatFrame — MVP Implementation Plan
 
-> **Version**: 1.0.0 · **Date**: 2026-06-09 · **Status**: Draft
+> **Version**: 1.1.0 · **Date**: 2026-06-09 · **Status**: Draft
 > **Constitution**: v1.0.0 · **Scope**: One-to-one WhatsApp chats only
 
 ---
 
 ## Table of Contents
 
+**Part I — Overview**
+
 1. [Project Overview](#1-project-overview)
 2. [MVP Scope](#2-mvp-scope)
 3. [Technical Stack](#3-technical-stack)
-4. [Repository Structure](#4-repository-structure)
-5. [User Flow](#5-user-flow)
-6. [Screen Specifications](#6-screen-specifications)
-7. [Backend Architecture](#7-backend-architecture)
-8. [WhatsApp Adapter Design](#8-whatsapp-adapter-design)
-9. [Local API Design](#9-local-api-design)
-10. [Data Storage Design](#10-data-storage-design)
-11. [Data Model](#11-data-model)
-12. [Normalization Pipeline](#12-normalization-pipeline)
-13. [Frontend Architecture](#13-frontend-architecture)
-14. [UI Design Direction](#14-ui-design-direction)
-15. [HTML Export Design](#15-html-export-design)
-16. [Mock Conversation Requirements](#16-mock-conversation-requirements)
-17. [Development Phases](#17-development-phases)
-18. [Constitution Compliance Matrix](#18-constitution-compliance-matrix)
-19. [Risks and Mitigations](#19-risks-and-mitigations)
-20. [Non-Negotiable Implementation Rules](#20-non-negotiable-implementation-rules)
-21. [Acceptance Criteria](#21-acceptance-criteria)
-22. [MVP Completion Checklist](#22-mvp-completion-checklist)
+4. [User Flow](#4-user-flow)
+
+**Part II — Phases**
+
+5. [Phase 1: Repository Foundation and Tooling](#5-phase-1-repository-foundation-and-tooling)
+6. [Phase 2: Shared Contracts and Mock Data](#6-phase-2-shared-contracts-and-mock-data)
+7. [Phase 3: Project Folder Storage](#7-phase-3-project-folder-storage)
+8. [Phase 4: Normalization Engine](#8-phase-4-normalization-engine)
+9. [Phase 5: WhatsApp Session Integration](#9-phase-5-whatsapp-session-integration)
+10. [Phase 6: Real Chat Listing](#10-phase-6-real-chat-listing)
+11. [Phase 7: Real Message and Image Import](#11-phase-7-real-message-and-image-import)
+12. [Phase 8: WhatsApp-Like Preview](#12-phase-8-whatsapp-like-preview)
+13. [Phase 9: HTML Export](#13-phase-9-html-export)
+14. [Phase 10: Hardening, QA, and MVP Polish](#14-phase-10-hardening-qa-and-mvp-polish)
+
+**Part III — Governance**
+
+15. [Constitution Compliance Matrix](#15-constitution-compliance-matrix)
+16. [Risks and Mitigations](#16-risks-and-mitigations)
+17. [Non-Negotiable Implementation Rules](#17-non-negotiable-implementation-rules)
+18. [Acceptance Criteria](#18-acceptance-criteria)
+19. [MVP Completion Checklist](#19-mvp-completion-checklist)
+
+---
+
+# Part I — Overview
 
 ---
 
@@ -146,7 +155,63 @@ introduces them:
 
 ---
 
-## 4. Repository Structure
+## 4. User Flow
+
+The MVP user flow is a linear wizard. One active project at a time.
+
+```text
+Open ChatFrame in browser
+  ↓
+Welcome screen → Choose language (Arabic / English)
+  ↓
+Connect WhatsApp → Scan QR code
+  ↓
+Connection successful → Disclaimer acknowledged
+  ↓
+Chat picker → Select one-to-one chat
+  ↓
+Import options → Choose text-only or text + images
+  ↓
+Import progress → Real-time status via SSE
+  ↓
+Quality report → Review import accuracy
+  ↓
+Preview → WhatsApp-like conversation view
+  ↓
+Export settings → Privacy options + watermark toggle
+  ↓
+Export HTML folder → Open in browser
+```
+
+---
+
+# Part II — Phases
+
+Each phase is self-contained. It includes the architecture, data models,
+API endpoints, screen specs, file structures, and tests relevant to that
+phase. Earlier phases MUST be complete before starting later phases.
+
+```text
+Phase 1 ─── Foundation & Tooling
+Phase 2 ─── Shared Contracts & Mock Data
+Phase 3 ─── Project Folder Storage
+Phase 4 ─── Normalization Engine
+Phase 5 ─── WhatsApp Session Integration
+Phase 6 ─── Real Chat Listing
+Phase 7 ─── Real Message & Image Import
+Phase 8 ─── WhatsApp-Like Preview
+Phase 9 ─── HTML Export
+Phase 10 ── Hardening, QA, & MVP Polish
+```
+
+---
+
+## 5. Phase 1: Repository Foundation and Tooling
+
+**Goal:** Create a stable full-stack TypeScript monorepo with all tooling
+configured and a working app shell with i18n support.
+
+### 5.1 Repository Structure
 
 ChatFrame uses a **pnpm workspace monorepo** with three packages:
 
@@ -313,48 +378,28 @@ chatframe/
         └── mock-render-model.json
 ```
 
-**Key architectural decision:** The `packages/shared/` package contains all
-TypeScript types, Zod schemas, and constants shared between backend and
-frontend. Both packages import from `@chatframe/shared`. This ensures
-contract alignment without duplication.
+### 5.2 Backend Foundation
 
----
+**Tasks:**
+- Initialize `backend/` package with Fastify + TypeScript (strict mode).
+- Add Pino logger.
+- Configure environment loading from `.env` (port 3714 default).
+- Create `GET /api/health` endpoint.
+- Add CORS configuration for frontend dev server origin.
 
-## 5. User Flow
+### 5.3 Frontend Foundation
 
-The MVP user flow is a linear wizard. One active project at a time.
+**Tasks:**
+- Initialize `frontend/` package with React 19 + Vite + TypeScript (strict mode).
+- Add Tailwind CSS.
+- Add Inter and IBM Plex Sans Arabic fonts.
+- Set up React Router v7 with placeholder wizard routes.
+- Set up Zustand stores: `useLanguageStore` (language + direction).
+- Set up TanStack Query provider.
+- Create `AppShell` layout component.
+- Create `LanguageSwitcher` component.
 
-```text
-Open ChatFrame in browser
-  ↓
-Welcome screen → Choose language (Arabic / English)
-  ↓
-Connect WhatsApp → Scan QR code
-  ↓
-Connection successful → Disclaimer acknowledged
-  ↓
-Chat picker → Select one-to-one chat
-  ↓
-Import options → Choose text-only or text + images
-  ↓
-Import progress → Real-time status via SSE
-  ↓
-Quality report → Review import accuracy
-  ↓
-Preview → WhatsApp-like conversation view
-  ↓
-Export settings → Privacy options + watermark toggle
-  ↓
-Export HTML folder → Open in browser
-```
-
----
-
-## 6. Screen Specifications
-
-### 6.1 Welcome / Language Screen
-
-**Purpose:** Introduce ChatFrame and let the user choose Arabic or English.
+**Screen: Welcome / Language**
 
 | Requirement | Details |
 |---|---|
@@ -365,413 +410,45 @@ Export HTML folder → Open in browser
 
 **Actions:** Choose language → Continue
 
----
+### 5.4 Shared Package Foundation
 
-### 6.2 WhatsApp Connection Screen
+**Tasks:**
+- Initialize `packages/shared/` with TypeScript.
+- Create placeholder `index.ts` exporting type stubs.
+- Wire pnpm workspace references so backend and frontend can import
+  from `@chatframe/shared`.
 
-**Purpose:** Start WhatsApp connection, display QR code, show status.
+### 5.5 Tooling
 
-**Connection states:**
+**Tasks:**
+- Configure `pnpm-workspace.yaml`.
+- Configure `tsconfig.base.json` shared by all packages.
+- Add ESLint and Prettier with shared config.
+- Configure Vitest for all packages.
+- Add root `package.json` scripts: `dev`, `build`, `test`, `lint`.
+- Configure `.env.example` with default ports.
 
-| State | UI Behavior |
-|---|---|
-| `disconnected` | Show "Connect WhatsApp" button |
-| `initializing` | Show loading spinner |
-| `waiting_for_qr` | Display QR code with scan instructions |
-| `qr_ready` | QR code visible — user scans |
-| `connecting` | QR scanned — establishing session |
-| `connected` | Success — proceed to chat picker |
-| `session_expired` | Show reconnect action |
-| `connection_failed` | Show error + retry action |
+### 5.6 Definition of Done
 
-**Requirements:**
-- User MUST manually start connection.
-- QR code MUST only appear in the UI — never logged.
-- If a saved session exists, attempt silent restore.
-- If restore fails, show reconnect action.
-- Display disclaimer banner at top of screen.
-- Provide clear instructions: Open WhatsApp → Linked Devices → Scan QR.
-
-**Actions:** Connect · Reconnect · Logout / Unlink Session
-
----
-
-### 6.3 Chat Picker Screen
-
-**Purpose:** Let the user select one private chat.
-
-**Requirements:**
-- Show only one-to-one chats. Groups MUST be filtered out.
-- Search by contact name or phone number.
-- Show: display name, phone number (if available), last message preview, timestamp.
-- Use fake/generated avatar — never real WhatsApp profile pictures.
-
-**Actions:** Search · Select chat · Continue
+- [ ] `pnpm dev` starts both backend (port 3714) and frontend (port 5173).
+- [ ] Frontend calls backend health endpoint successfully.
+- [ ] Strict TypeScript — zero errors across all packages.
+- [ ] Arabic RTL and English LTR switch works.
+- [ ] Basic app shell visible in browser with language selection.
+- [ ] Vitest runs with zero failures.
+- [ ] ESLint + Prettier pass on all files.
 
 ---
 
-### 6.4 Import Options Screen
+## 6. Phase 2: Shared Contracts and Mock Data
 
-**Purpose:** Let the user choose what to import.
+**Goal:** Define all project-owned types, create mock data and a mock
+adapter, then power the entire UI flow with fake data — before any
+WhatsApp connection.
 
-| Option | Required? | Default |
-|---|---|---|
-| Import text messages | Yes (always on) | Enabled |
-| Import images | No (optional) | Disabled |
+### 6.1 Shared Types (`packages/shared/src/types/`)
 
-**Requirements:**
-- Explain that importing images may take longer.
-- No automatic import before user confirmation.
-- User MUST explicitly start import (Constitution II).
-
-**Actions:** Start Import · Back
-
----
-
-### 6.5 Import Progress Screen
-
-**Purpose:** Show real-time import progress via SSE.
-
-**Progress stages:**
-
-```text
-preparing_project → fetching_metadata → fetching_messages →
-saving_raw_messages → downloading_images → normalizing →
-resolving_replies → generating_quality_report → preparing_preview
-```
-
-**Example progress text:**
-```text
-Imported 420 / 2,000 messages
-Downloaded 31 / 120 images
-Resolving replies…
-```
-
-**Requirements:**
-- MUST NOT freeze UI during import (Constitution XVIII).
-- Show warnings without stopping unless fatal.
-- Allow cancellation if practical.
-
----
-
-### 6.6 Quality Report Screen
-
-**Purpose:** Give the user confidence that the import was analyzed accurately.
-
-**MUST display** (Constitution VIII):
-
-| Metric | Description |
-|---|---|
-| Total raw messages | Count before processing |
-| Total normalized messages | Count after normalization |
-| Duplicates removed | Count of deduplicated messages |
-| Unresolved replies | Replies that couldn't be linked |
-| Missing images | Images that failed to download |
-| Unsupported message types | By type with counts |
-| Date range | From / to |
-| Warnings | Non-fatal issues |
-| Errors | Fatal issues (block export if any) |
-
-**Behavior:**
-- Warnings MUST NOT block export.
-- Fatal errors MUST block export.
-- Missing images show placeholders in preview/export.
-
-**Actions:** Continue to Preview · View Details · Back
-
----
-
-### 6.7 Preview Screen
-
-**Purpose:** Display the conversation as it will appear in the exported HTML.
-
-**Requirements:**
-- WhatsApp-like visual layout with custom CSS (not Tailwind-only).
-- Desktop app shell with phone-width conversation area.
-- **Virtual scrolling** for large conversations (Constitution XVIII).
-- Light and dark mode toggle.
-- Date separators, timestamps (HH:MM:SS), reply blocks.
-- Images inside message bubbles with captions.
-- Missing image placeholders, unsupported message cards.
-- Deleted message indicator, edited label.
-- Fake/generated avatar only.
-- Frontend renders normalized data ONLY (Constitution VII).
-
-**Message layout:**
-
-| Element | Position |
-|---|---|
-| Incoming messages | Left side |
-| Outgoing messages | Right side |
-| Date separators | Centered |
-| Replies | Compact quoted block inside bubble |
-| Images | Inside bubble, caption below |
-| Timestamp | Inside or below bubble |
-
-**Actions:** Toggle light/dark · Change font size · Change conversation
-width · Open export settings
-
----
-
-### 6.8 Export Settings Screen
-
-**Purpose:** Let user decide privacy and export options.
-
-| Setting | Type | Default |
-|---|---|---|
-| Show contact name | Toggle | Yes |
-| Show phone number | Toggle | No |
-| Display alias | Text input | Empty (optional) |
-| Fake avatar | Required | Always on |
-| Watermark | Toggle | Enabled ("Exported by ChatFrame") |
-| Theme | Light / Dark | Current preview theme |
-
-**Requirements:**
-- Privacy settings MUST affect both preview and export.
-- Export format is HTML only in MVP.
-- Exported HTML uses local assets folder.
-
-**Actions:** Export HTML · Back to Preview
-
----
-
-### 6.9 Export Complete Screen
-
-**Purpose:** Confirm successful export.
-
-**Requirements:**
-- Show export folder path and main HTML file path.
-- "Open HTML" opens the file in a new browser tab.
-- "Open Folder" opens the OS file explorer (if supported).
-- Session files MUST NOT be in the export (Constitution XIII).
-
-**Actions:** Open HTML · Open Folder · Start New Import
-
----
-
-## 7. Backend Architecture
-
-### 7.1 Responsibilities
-
-The backend owns all data processing (Constitution XV):
-
-```text
-WhatsApp session lifecycle      Import orchestration
-QR generation                   Raw storage (NDJSON)
-Chat listing                    Normalization pipeline
-Message import                  Deduplication
-Image download                  Reply resolution
-Media linking                   Quality reporting
-Render model creation           HTML export generation
-Filesystem operations           Image serving (API route)
-```
-
-The frontend MUST NOT access WhatsApp directly or read project files from
-the filesystem.
-
-### 7.2 Module Summary
-
-| Module | Responsibility |
-|---|---|
-| `api/` | Fastify route handlers and request/response schemas |
-| `whatsapp/` | Adapter interface + `whatsapp-web.js` implementation |
-| `projects/` | Project lifecycle, paths, manifest |
-| `storage/` | NDJSON read/write, JSON files, media store |
-| `import/` | Orchestration, message fetching, image download, progress |
-| `normalize/` | Message normalization, dedup, replies, timestamps, quality |
-| `render/` | Build render model from normalized data |
-| `export/` | HTML generation with templates and local assets |
-| `security/` | Log sanitization, session protection |
-| `utils/` | Logger, hashing, file names, error types |
-
----
-
-## 8. WhatsApp Adapter Design
-
-### 8.1 Adapter Interface
-
-All WhatsApp-specific code MUST sit behind this interface (Constitution IV).
-The rest of the application depends ONLY on this interface.
-
-```typescript
-export interface WhatsAppAdapter {
-  initialize(): Promise<void>;
-  getConnectionState(): ConnectionState;
-  onQr(callback: (qr: string) => void): void;
-  onStateChange(callback: (state: ConnectionState) => void): void;
-  listPrivateChats(): Promise<ChatSummary[]>;
-  fetchMessages(
-    chatId: string,
-    options: FetchMessagesOptions,
-  ): AsyncIterable<RawWhatsAppMessage>;
-  downloadImage(
-    message: RawWhatsAppMessage,
-  ): Promise<DownloadedMedia | null>;
-  logout(): Promise<void>;
-  destroy(): Promise<void>;
-}
-```
-
-### 8.2 MVP Adapter: `WhatsappWebJsAdapter`
-
-**Rules:**
-- MUST NOT leak `whatsapp-web.js` types into core modules.
-- MUST map library messages into project-owned `RawWhatsAppMessage` type.
-- MUST preserve adapter-specific raw payload separately.
-- MUST NOT expose message-sending methods.
-- MUST use `AsyncIterable` for message fetching (streaming, Constitution XVIII).
-
-### 8.3 Mock Adapter: `MockAdapter`
-
-A mock adapter MUST be provided for development and testing. It returns
-synthetic fixture data without connecting to WhatsApp (Constitution XX).
-
----
-
-## 9. Local API Design
-
-### 9.1 Overview
-
-The backend provides local HTTP APIs consumed by the frontend.
-Real-time events use **Server-Sent Events (SSE)**.
-
-### 9.2 Endpoints
-
-#### Session
-
-| Method | Path | Description |
-|---|---|---|
-| `POST` | `/api/session/connect` | Start WhatsApp connection |
-| `GET` | `/api/session/status` | Get current connection state |
-| `POST` | `/api/session/logout` | Logout and clear session |
-
-#### Events (SSE)
-
-| Method | Path | Description |
-|---|---|---|
-| `GET` | `/api/events` | SSE stream for real-time updates |
-
-**Event types:**
-
-```text
-session.state          session.qr
-import.progress        import.warning
-import.error           import.completed
-```
-
-#### Chats
-
-| Method | Path | Description |
-|---|---|---|
-| `GET` | `/api/chats/private` | List one-to-one chats |
-
-#### Projects
-
-| Method | Path | Description |
-|---|---|---|
-| `POST` | `/api/projects` | Create a new project |
-| `GET` | `/api/projects/:projectId` | Get project manifest |
-| `PATCH` | `/api/projects/:projectId` | Rename project |
-
-#### Import
-
-| Method | Path | Description |
-|---|---|---|
-| `POST` | `/api/import/start` | Start import for selected chat |
-| `GET` | `/api/import/:importId/status` | Get import status |
-| `POST` | `/api/import/:importId/cancel` | Cancel running import |
-
-#### Preview
-
-| Method | Path | Description |
-|---|---|---|
-| `GET` | `/api/projects/:projectId/preview` | Get paginated render model |
-| `GET` | `/api/projects/:projectId/preview/count` | Get total message count |
-
-#### Media
-
-| Method | Path | Description |
-|---|---|---|
-| `GET` | `/api/media/:projectId/:filename` | Serve image file for preview |
-
-#### Export
-
-| Method | Path | Description |
-|---|---|---|
-| `POST` | `/api/projects/:projectId/export/html` | Generate HTML export |
-
----
-
-## 10. Data Storage Design
-
-### 10.1 Project Folder Structure
-
-Each import creates a self-contained project folder (Constitution V, VI):
-
-```text
-workspace/
-  projects/
-    chatframe_2026-06-09_ahmed/     # auto-generated, user can rename
-      project.json                  # manifest: id, name, created, chat info
-      source.json                   # source metadata: adapter, chat ID
-
-      raw/                          # IMMUTABLE — never modified after write
-        messages.raw.ndjson         # raw adapter messages (streaming format)
-        media.raw.ndjson            # raw media metadata
-
-      normalized/                   # DERIVED — regeneratable from raw/
-        messages.ndjson             # normalized messages
-        participants.json           # participant info
-        media.json                  # media linking index
-        quality-report.json         # quality report
-        render-model.json           # or streamed via API
-
-      media/
-        images/                     # downloaded image files
-          img_000001.jpg
-          img_000002.jpg
-
-      exports/
-        html/
-          conversation.html
-          assets/
-            style.css
-            fonts/                  # bundled fonts for offline use
-            media/
-              img_000001.jpg
-              img_000002.jpg
-
-      logs/
-        import.log
-        normalization.log
-```
-
-### 10.2 Project Naming
-
-Auto-generated: `chatframe_YYYY-MM-DD_<contact-name-slug>`
-
-The user can optionally rename the project via the API after creation.
-
-### 10.3 Storage Rules
-
-| Rule | Constitution Ref |
-|---|---|
-| Raw files are **immutable** — never overwritten | VI |
-| Normalized files are **derived** — regeneratable from raw | VI |
-| Export files are **derived** — regeneratable from normalized | VI |
-| Session files NEVER stored inside project folders | XIII |
-| Logs MUST NOT contain QR codes, tokens, or secrets | XIII, XIX |
-| Message content MUST NOT be logged unless for local debugging | I |
-| Large collections use NDJSON, not monolithic JSON | V, XVIII |
-
----
-
-## 11. Data Model
-
-All types live in `packages/shared/src/types/`. Zod schemas live in
-`packages/shared/src/schemas/`.
-
-### 11.1 ChatSummary
+#### ChatSummary
 
 ```typescript
 export interface ChatSummary {
@@ -784,7 +461,7 @@ export interface ChatSummary {
 }
 ```
 
-### 11.2 NormalizedMessage
+#### NormalizedMessage
 
 ```typescript
 export interface NormalizedMessage {
@@ -832,7 +509,7 @@ export interface NormalizedMessage {
 }
 ```
 
-### 11.3 QualityReport
+#### QualityReport
 
 ```typescript
 export interface QualityReport {
@@ -871,7 +548,7 @@ export interface QualityError {
 }
 ```
 
-### 11.4 ConnectionState
+#### ConnectionState
 
 ```typescript
 export type ConnectionState =
@@ -885,7 +562,7 @@ export type ConnectionState =
   | 'connection_failed';
 ```
 
-### 11.5 ImportProgress
+#### ImportProgress
 
 ```typescript
 export interface ImportProgress {
@@ -916,7 +593,7 @@ export type ImportStage =
   | 'cancelled';
 ```
 
-### 11.6 ExportSettings
+#### ExportSettings
 
 ```typescript
 export interface ExportSettings {
@@ -928,11 +605,212 @@ export interface ExportSettings {
 }
 ```
 
+### 6.2 Zod Schemas (`packages/shared/src/schemas/`)
+
+Add Zod schemas matching every type above. These are used for runtime
+validation at API boundaries, adapter outputs, and storage reads
+(Constitution XIV).
+
+### 6.3 WhatsApp Adapter Interface
+
+Define the adapter interface in `backend/src/whatsapp/WhatsAppAdapter.ts`.
+All WhatsApp-specific code MUST sit behind this interface (Constitution IV).
+
+```typescript
+export interface WhatsAppAdapter {
+  initialize(): Promise<void>;
+  getConnectionState(): ConnectionState;
+  onQr(callback: (qr: string) => void): void;
+  onStateChange(callback: (state: ConnectionState) => void): void;
+  listPrivateChats(): Promise<ChatSummary[]>;
+  fetchMessages(
+    chatId: string,
+    options: FetchMessagesOptions,
+  ): AsyncIterable<RawWhatsAppMessage>;
+  downloadImage(
+    message: RawWhatsAppMessage,
+  ): Promise<DownloadedMedia | null>;
+  logout(): Promise<void>;
+  destroy(): Promise<void>;
+}
+```
+
+### 6.4 Mock Adapter
+
+Create `MockAdapter` implementing `WhatsAppAdapter`. It returns synthetic
+fixture data without connecting to WhatsApp (Constitution XX).
+
+### 6.5 Mock Conversation Fixture
+
+A synthetic mock conversation MUST be created. It powers development and
+testing of the preview, export, and normalization pipeline.
+
+The mock conversation MUST include:
+
+| Scenario | Purpose |
+|---|---|
+| Arabic text message | RTL rendering |
+| English text message | LTR rendering |
+| Mixed Arabic/English message | BiDi handling |
+| Emoji-only message | Emoji rendering |
+| Outgoing message | Right-aligned bubble |
+| Incoming message | Left-aligned bubble |
+| Image message | Image inside bubble |
+| Image with caption | Caption below image |
+| Reply to text | Quoted block rendering |
+| Reply to image | Image reference in quote |
+| Unresolved reply | Missing reference handling |
+| Deleted message | Deleted indicator |
+| Edited message | Edited label |
+| Unsupported message type | Unsupported card |
+| Multiple date separators | Date grouping |
+| Long message (500+ chars) | Text wrapping |
+| Missing image placeholder | Placeholder rendering |
+| Consecutive same-sender messages | Grouped bubble styling |
+| Timestamp with seconds | HH:MM:SS format |
+
+### 6.6 Mock API Endpoints
+
+Build mock backend endpoints powered by fixtures:
+- `GET /api/chats/private` → returns mock chat list.
+- `GET /api/projects/:projectId/preview` → returns mock render model.
+
+### 6.7 Frontend: API Client and Wizard Flow
+
+**Tasks:**
+- Build API client layer using TanStack Query hooks.
+- Build basic wizard routing (placeholder screens for each step).
+- Render mock chat list in chat picker screen placeholder.
+- Render mock conversation in preview screen placeholder.
+
+### 6.8 Definition of Done
+
+- [ ] All shared types defined in `@chatframe/shared` with Zod schemas.
+- [ ] `WhatsAppAdapter` interface defined.
+- [ ] `MockAdapter` implemented with synthetic fixture data.
+- [ ] Mock data powers full UI flow — no WhatsApp connection needed.
+- [ ] Frontend and backend agree on shared contracts.
+- [ ] Mock data covers all scenarios from the fixture table above.
+
 ---
 
-## 12. Normalization Pipeline
+## 7. Phase 3: Project Folder Storage
 
-The normalization pipeline runs after raw import and MUST be deterministic
+**Goal:** Implement local filesystem storage with clear separation between
+raw, normalized, and export data.
+
+### 7.1 Project Folder Structure
+
+Each import creates a self-contained project folder (Constitution V, VI):
+
+```text
+workspace/
+  projects/
+    chatframe_2026-06-09_ahmed/     # auto-generated, user can rename
+      project.json                  # manifest: id, name, created, chat info
+      source.json                   # source metadata: adapter, chat ID
+
+      raw/                          # IMMUTABLE — never modified after write
+        messages.raw.ndjson         # raw adapter messages (streaming format)
+        media.raw.ndjson            # raw media metadata
+
+      normalized/                   # DERIVED — regeneratable from raw/
+        messages.ndjson             # normalized messages
+        participants.json           # participant info
+        media.json                  # media linking index
+        quality-report.json         # quality report
+
+      media/
+        images/                     # downloaded image files
+          img_000001.jpg
+          img_000002.jpg
+
+      exports/
+        html/
+          conversation.html
+          assets/
+            style.css
+            fonts/                  # bundled fonts for offline use
+            media/
+              img_000001.jpg
+              img_000002.jpg
+
+      logs/
+        import.log
+        normalization.log
+```
+
+### 7.2 Project Naming
+
+Auto-generated: `chatframe_YYYY-MM-DD_<contact-name-slug>`
+
+The user can optionally rename the project via the API after creation.
+
+### 7.3 Storage Rules
+
+| Rule | Constitution Ref |
+|---|---|
+| Raw files are **immutable** — never overwritten | VI |
+| Normalized files are **derived** — regeneratable from raw | VI |
+| Export files are **derived** — regeneratable from normalized | VI |
+| Session files NEVER stored inside project folders | XIII |
+| Logs MUST NOT contain QR codes, tokens, or secrets | XIII, XIX |
+| Message content MUST NOT be logged unless for local debugging | I |
+| Large collections use NDJSON, not monolithic JSON | V, XVIII |
+
+### 7.4 Backend Modules
+
+| Module | File | Responsibility |
+|---|---|---|
+| `ProjectStore` | `projects/ProjectStore.ts` | Create, read, rename projects |
+| `ProjectPaths` | `projects/ProjectPaths.ts` | Deterministic path generation |
+| `ProjectManifest` | `projects/ProjectManifest.ts` | `project.json` read/write |
+| `NdjsonWriter` | `storage/NdjsonWriter.ts` | Streaming NDJSON append |
+| `NdjsonReader` | `storage/NdjsonReader.ts` | Streaming NDJSON read |
+| `JsonFile` | `storage/JsonFile.ts` | JSON read/write with Zod validation |
+| `MediaStore` | `storage/MediaStore.ts` | Image save/retrieve |
+
+### 7.5 API Endpoints Introduced
+
+| Method | Path | Description |
+|---|---|---|
+| `POST` | `/api/projects` | Create a new project |
+| `GET` | `/api/projects/:projectId` | Get project manifest |
+| `PATCH` | `/api/projects/:projectId` | Rename project |
+
+### 7.6 Frontend Updates
+
+- Add project creation flow placeholder.
+- Display current project status.
+- Connect to project API via TanStack Query.
+
+### 7.7 Tests
+
+- Project path generation (deterministic naming).
+- NDJSON write + read round-trip.
+- NDJSON streaming with large files.
+- `JsonFile` read/write with Zod validation.
+- Raw/normalized directory separation enforcement.
+
+### 7.8 Definition of Done
+
+- [ ] Backend creates well-structured project folders.
+- [ ] NDJSON streaming works for large files.
+- [ ] Raw and normalized directories are strictly separate.
+- [ ] Project CRUD API endpoints work.
+- [ ] Tests cover all storage operations.
+
+---
+
+## 8. Phase 4: Normalization Engine
+
+**Goal:** Build the core backend intelligence — the normalization pipeline
+that transforms raw messages into normalized, renderable data. Fully
+testable without WhatsApp.
+
+### 8.1 Normalization Pipeline
+
+The pipeline runs after raw import and MUST be deterministic
 (Constitution IX). Given the same raw input and normalization version, the
 output MUST be identical.
 
@@ -968,65 +846,398 @@ Build render model
 - Deduplication prefers the most complete message record.
 - All logic MUST be testable without WhatsApp (Constitution XX).
 
+### 8.2 Backend Modules
+
+| Module | File | Responsibility |
+|---|---|---|
+| `normalizeMessage` | `normalize/normalizeMessage.ts` | Raw → normalized mapping |
+| `normalizeTimestamp` | `normalize/normalizeTimestamp.ts` | Preserve original + derive ISO |
+| `dedupeMessages` | `normalize/dedupeMessages.ts` | Prefer most complete record |
+| `resolveReplies` | `normalize/resolveReplies.ts` | Best-effort reply linking |
+| `resolveParticipants` | `normalize/resolveParticipants.ts` | Sender identity resolution |
+| `buildQualityReport` | `normalize/buildQualityReport.ts` | Quality report generation |
+| `buildRenderModel` | `render/buildRenderModel.ts` | Render model from normalized data |
+
+### 8.3 Quality Report (Constitution VIII)
+
+Every import/normalization MUST produce a report containing:
+
+| Metric | Description |
+|---|---|
+| Total raw messages | Count before processing |
+| Total normalized messages | Count after normalization |
+| Duplicates removed | Count of deduplicated messages |
+| Unresolved replies | Replies that couldn't be linked |
+| Missing images | Images that failed to download |
+| Unsupported message types | By type with counts |
+| Date range | From / to |
+| Warnings | Non-fatal issues |
+| Errors | Fatal issues |
+
+### 8.4 Screen: Quality Report
+
+**Purpose:** Give the user confidence that the import was analyzed
+accurately.
+
+**Behavior:**
+- Warnings MUST NOT block export.
+- Fatal errors MUST block export.
+- Missing images show placeholders in preview/export.
+
+**Actions:** Continue to Preview · View Details · Back
+
+### 8.5 Frontend Updates
+
+- Update preview screen to consume real render model structure.
+- Build `QualitySummary` and `QualityIssueList` components.
+- Build `UnsupportedMessage` card component.
+- Build missing image placeholder component.
+
+### 8.6 Tests
+
+- Message normalization (each field mapping).
+- Timestamp normalization (original preserved + ISO derived).
+- Sorting correctness.
+- Deduplication (most complete record preferred).
+- Reply resolution (resolved, unresolved, edge cases).
+- Missing image handling.
+- Quality report field accuracy.
+- Unsupported message preservation.
+- Determinism: same input → same output.
+
+### 8.7 Definition of Done
+
+- [ ] Synthetic raw messages → normalized → render model pipeline works.
+- [ ] Quality report generated with all required fields.
+- [ ] Frontend renders render model accurately.
+- [ ] No frontend parsing of raw messages.
+- [ ] All normalization tests passing.
+
 ---
 
-## 13. Frontend Architecture
+## 9. Phase 5: WhatsApp Session Integration
 
-### 13.1 Responsibilities
+**Goal:** Connect to WhatsApp locally using `whatsapp-web.js`, display QR
+code, manage session lifecycle.
 
-The frontend owns (Constitution XV):
+### 9.1 WhatsApp Adapter: `WhatsappWebJsAdapter`
+
+Implements the `WhatsAppAdapter` interface defined in Phase 2.
+
+**Rules:**
+- MUST NOT leak `whatsapp-web.js` types into core modules (Constitution IV).
+- MUST map library messages into project-owned `RawWhatsAppMessage` type.
+- MUST preserve adapter-specific raw payload separately.
+- MUST NOT expose message-sending methods (Constitution II).
+- MUST use `AsyncIterable` for message fetching (Constitution XVIII).
+
+### 9.2 Session Lifecycle
 
 ```text
-Language and direction selection     User flow (wizard steps)
-QR display                          Chat selection UI
-Import option UI                    Progress display
-Quality report display              Preview rendering
-Privacy settings UI                 Export action + completion
-Theme selection (light/dark)        Font size / conversation width
+Disconnected
+  ↓ user clicks "Connect"
+Initializing
+  ↓ library ready
+Waiting for QR → QR Ready
+  ↓ user scans
+Connecting
+  ↓ authenticated
+Connected
 ```
 
-The frontend MUST NOT:
-- Connect to WhatsApp directly
-- Read files from the filesystem
-- Parse raw WhatsApp data
-- Deduplicate messages or resolve replies
-- Generate quality reports
+**Session restore:** If a saved session exists, the backend MAY attempt
+silent restore. If restore fails, transition to `session_expired` state.
 
-### 13.2 State Management
+**Logout:** `POST /api/session/logout` clears session files and
+transitions to `disconnected`.
 
-| Layer | Tool | Scope |
+### 9.3 Session Safety (Constitution XIII)
+
+- Session storage MUST be treated as protected local data.
+- Session files MUST NOT be included in exports, logs, or archives.
+- QR codes, tokens, and session secrets MUST NOT be logged.
+- The application MUST provide a clear Logout / Unlink Session action.
+
+### 9.4 API Endpoints Introduced
+
+| Method | Path | Description |
 |---|---|---|
-| **Server state** | TanStack Query | Chats, preview data, quality report, import status, export results |
-| **Client state** | Zustand | Language, theme, selected chat, current project, export settings |
+| `POST` | `/api/session/connect` | Start WhatsApp connection |
+| `GET` | `/api/session/status` | Get current connection state |
+| `POST` | `/api/session/logout` | Logout and clear session |
 
-### 13.3 API Communication
+### 9.5 Real-Time Events (SSE)
 
-- **REST calls:** `fetch` wrapped in TanStack Query hooks
-- **Real-time events:** SSE via `EventSource` in a custom hook
-- **Image display:** `<img src="/api/media/:projectId/:filename" />`
+| Method | Path | Description |
+|---|---|---|
+| `GET` | `/api/events` | SSE stream for real-time updates |
 
-### 13.4 Virtual Scrolling (Preview)
+**Event types introduced in this phase:**
 
-The preview MUST use virtual scrolling for large conversations:
-- Render only visible messages plus a buffer above/below.
-- Request message data in pages from the backend preview API.
-- Maintain scroll position when navigating back to preview.
+```text
+session.state          session.qr
+```
+
+### 9.6 Screen: WhatsApp Connection
+
+**Purpose:** Start WhatsApp connection, display QR code, show status.
+
+**Connection states:**
+
+| State | UI Behavior |
+|---|---|
+| `disconnected` | Show "Connect WhatsApp" button |
+| `initializing` | Show loading spinner |
+| `waiting_for_qr` | Display QR code with scan instructions |
+| `qr_ready` | QR code visible — user scans |
+| `connecting` | QR scanned — establishing session |
+| `connected` | Success — proceed to chat picker |
+| `session_expired` | Show reconnect action |
+| `connection_failed` | Show error + retry action |
+
+**Requirements:**
+- User MUST manually start connection.
+- QR code MUST only appear in the UI — never logged.
+- Display disclaimer banner at top of screen.
+- Provide clear instructions: Open WhatsApp → Linked Devices → Scan QR.
+
+**Actions:** Connect · Reconnect · Logout / Unlink Session
+
+### 9.7 Frontend Components
+
+- `QrPanel` — displays QR code from SSE events.
+- `ConnectionStatus` — shows current state with appropriate UI.
+- `DisclaimerBanner` — displays risk disclaimer.
+
+### 9.8 Backend Modules
+
+| Module | File | Responsibility |
+|---|---|---|
+| `WhatsappWebJsAdapter` | `whatsapp/WhatsappWebJsAdapter.ts` | Library implementation |
+| `sessionStore` | `whatsapp/sessionStore.ts` | Session file management |
+| `sessionProtection` | `security/sessionProtection.ts` | Session file safeguards |
+| `sanitizeForLog` | `security/sanitizeForLog.ts` | Prevent secret leakage |
+
+### 9.9 Definition of Done
+
+- [ ] User can scan QR and establish connection.
+- [ ] Connection state updates live via SSE.
+- [ ] Session restores on app restart.
+- [ ] Logout clears session files.
+- [ ] Disclaimer banner visible.
+- [ ] No QR codes or tokens in any log output.
+- [ ] No send-message methods exposed.
 
 ---
 
-## 14. UI Design Direction
+## 10. Phase 6: Real Chat Listing
 
-### 14.1 App Shell
+**Goal:** List one-to-one WhatsApp chats from a live connection.
 
-- Desktop-first, centered layout.
-- Clean wizard-like flow with step indicators.
-- Minimal distractions, clear progress and error states.
-- Arabic/English with intentional RTL/LTR handling at component level.
-- Inter (English) + IBM Plex Sans Arabic (Arabic) with system fallbacks.
+### 10.1 Backend Tasks
 
-### 14.2 Chat Renderer
+- Implement `listPrivateChats` in `WhatsappWebJsAdapter`:
+  - Fetch all chats from WhatsApp.
+  - Filter out group chats.
+  - Map library chat data to project-owned `ChatSummary` type.
+- Expose `GET /api/chats/private` endpoint with real data.
+- Handle disconnected session errors gracefully.
 
-The chat renderer uses **custom CSS** (not Tailwind-only):
+### 10.2 API Endpoints Introduced
+
+| Method | Path | Description |
+|---|---|---|
+| `GET` | `/api/chats/private` | List one-to-one chats (real data) |
+
+### 10.3 Screen: Chat Picker
+
+**Purpose:** Let the user select one private chat.
+
+**Requirements:**
+- Show only one-to-one chats. Groups MUST be filtered out.
+- Search by contact name or phone number.
+- Show: display name, phone number (if available), last message preview,
+  timestamp.
+- Use fake/generated avatar — never real WhatsApp profile pictures
+  (Constitution XII).
+
+**Actions:** Search · Select chat · Continue
+
+### 10.4 Frontend Components
+
+- `ChatSearch` — search input with filtering.
+- `ChatList` — scrollable list of `ChatListItem`.
+- `ChatListItem` — single chat row with fake avatar.
+
+### 10.5 Definition of Done
+
+- [ ] User sees real private chats from their WhatsApp.
+- [ ] Groups are filtered out — never selectable.
+- [ ] Search works by name and phone number.
+- [ ] Chat selection works end-to-end.
+- [ ] Disconnected state handled with clear error.
+
+---
+
+## 11. Phase 7: Real Message and Image Import
+
+**Goal:** Import text messages and images from a selected chat into a
+project folder, run normalization, and generate a quality report.
+
+### 11.1 Import Orchestration
+
+The `ImportOrchestrator` coordinates the full import pipeline:
+
+```text
+Create project folder
+  ↓
+Fetch chat metadata
+  ↓
+Fetch messages (streaming AsyncIterable)
+  ↓
+Save raw messages to NDJSON (immutable)
+  ↓
+Download images (when enabled)
+  ↓
+Save images to media/images/
+  ↓
+Save raw media metadata
+  ↓
+Run normalization pipeline (Phase 4)
+  ↓
+Generate quality report
+  ↓
+Emit completion event
+```
+
+### 11.2 Backend Modules
+
+| Module | File | Responsibility |
+|---|---|---|
+| `ImportOrchestrator` | `import/ImportOrchestrator.ts` | Full pipeline coordination |
+| `MessageFetcher` | `import/MessageFetcher.ts` | Stream messages from adapter |
+| `ImageDownloader` | `import/ImageDownloader.ts` | Download images with retry |
+| `ImportProgress` | `import/ImportProgress.ts` | Track + emit progress via SSE |
+
+### 11.3 API Endpoints Introduced
+
+| Method | Path | Description |
+|---|---|---|
+| `POST` | `/api/import/start` | Start import for selected chat |
+| `GET` | `/api/import/:importId/status` | Get import status |
+| `POST` | `/api/import/:importId/cancel` | Cancel running import |
+
+### 11.4 SSE Events Introduced
+
+```text
+import.progress        import.warning
+import.error           import.completed
+```
+
+### 11.5 Screen: Import Options
+
+**Purpose:** Let the user choose what to import.
+
+| Option | Required? | Default |
+|---|---|---|
+| Import text messages | Yes (always on) | Enabled |
+| Import images | No (optional) | Disabled |
+
+**Requirements:**
+- Explain that importing images may take longer.
+- No automatic import — user MUST explicitly start (Constitution II).
+
+**Actions:** Start Import · Back
+
+### 11.6 Screen: Import Progress
+
+**Purpose:** Show real-time import progress via SSE.
+
+**Progress stages:**
+
+```text
+preparing_project → fetching_metadata → fetching_messages →
+saving_raw_messages → downloading_images → normalizing →
+resolving_replies → generating_quality_report → preparing_preview
+```
+
+**Example progress text:**
+```text
+Imported 420 / 2,000 messages
+Downloaded 31 / 120 images
+Resolving replies…
+```
+
+**Requirements:**
+- MUST NOT freeze UI during import (Constitution XVIII).
+- Show warnings without stopping unless fatal.
+- Allow cancellation if practical.
+
+### 11.7 Definition of Done
+
+- [ ] User imports one real chat — text and optional images.
+- [ ] Raw files written (immutable NDJSON).
+- [ ] Normalized files derived from raw.
+- [ ] Quality report generated.
+- [ ] Import is explicitly user-triggered and read-only.
+- [ ] Missing images handled without crash — reported in quality report.
+- [ ] Progress updates visible in real-time via SSE.
+
+---
+
+## 12. Phase 8: WhatsApp-Like Preview
+
+**Goal:** Provide an accurate, performant preview of the imported
+conversation before export, using virtual scrolling.
+
+### 12.1 Backend Responsibilities
+
+- Serve paginated render model via preview API.
+- Serve images via local API route (`/api/media/:projectId/:filename`).
+- Apply privacy settings to render model when requested.
+
+### 12.2 API Endpoints Introduced
+
+| Method | Path | Description |
+|---|---|---|
+| `GET` | `/api/projects/:projectId/preview` | Get paginated render model |
+| `GET` | `/api/projects/:projectId/preview/count` | Get total message count |
+| `GET` | `/api/media/:projectId/:filename` | Serve image file for preview |
+
+### 12.3 Screen: Preview
+
+**Purpose:** Display the conversation as it will appear in the exported HTML.
+
+**Requirements:**
+- WhatsApp-like visual layout with custom CSS (not Tailwind-only).
+- Desktop app shell with phone-width conversation area.
+- **Virtual scrolling** — render only visible messages (Constitution XVIII).
+- Light and dark mode toggle.
+- Date separators, timestamps (HH:MM:SS), reply blocks.
+- Images inside message bubbles with captions.
+- Missing image placeholders, unsupported message cards.
+- Deleted message indicator, edited label.
+- Fake/generated avatar only (Constitution XII).
+- Frontend renders normalized data ONLY (Constitution VII).
+
+**Message layout:**
+
+| Element | Position |
+|---|---|
+| Incoming messages | Left side |
+| Outgoing messages | Right side |
+| Date separators | Centered |
+| Replies | Compact quoted block inside bubble |
+| Images | Inside bubble, caption below |
+| Timestamp | Inside or below bubble |
+
+**Actions:** Toggle light/dark · Change font size · Change conversation
+width · Open export settings
+
+### 12.4 Chat Renderer (Custom CSS)
+
+The chat renderer uses **custom CSS** — not Tailwind-only. Defined in
+`frontend/src/styles/chat-renderer.css`.
 
 | Element | Specification |
 |---|---|
@@ -1046,15 +1257,43 @@ The chat renderer uses **custom CSS** (not Tailwind-only):
 | Deleted | Struck-through or dimmed indicator |
 | Edited | Small "edited" label |
 
+### 12.5 Frontend Components
+
+- `ConversationPreview` — virtual scrolling container.
+- `MessageBubble` — text message bubble (incoming/outgoing).
+- `ReplyPreview` — compact quoted block inside bubble.
+- `ImageMessage` — image inside bubble with caption.
+- `DateSeparator` — centered date badge.
+- `UnsupportedMessage` — distinct card.
+
+### 12.6 Virtual Scrolling
+
+- Render only visible messages plus a buffer above/below.
+- Request message data in pages from the backend preview API.
+- Maintain scroll position when navigating back to preview.
+
+### 12.7 Definition of Done
+
+- [ ] Preview visually resembles WhatsApp.
+- [ ] Virtual scrolling handles 10,000+ messages smoothly.
+- [ ] Privacy settings affect preview in real-time.
+- [ ] All rendering uses normalized data only.
+- [ ] Light/dark mode toggle works.
+- [ ] RTL/LTR works correctly for mixed Arabic/English content.
+- [ ] Font size and conversation width controls work.
+
 ---
 
-## 15. HTML Export Design
+## 13. Phase 9: HTML Export
 
-### 15.1 Output Structure
+**Goal:** Generate an offline HTML export with local assets that matches
+the preview, obeys privacy settings, and works without the backend running.
+
+### 13.1 Export Output Structure
 
 ```text
 exports/html/
-  conversation.html       # self-contained page
+  conversation.html       # self-contained page — no JS required
   assets/
     style.css             # chat renderer styles
     fonts/                # Inter + IBM Plex Sans Arabic (subset)
@@ -1063,7 +1302,7 @@ exports/html/
       img_000002.jpg
 ```
 
-### 15.2 Requirements
+### 13.2 Export Requirements (Constitution X, XI, XII, XIII)
 
 | Requirement | Constitution Ref |
 |---|---|
@@ -1076,317 +1315,101 @@ exports/html/
 | Session files NEVER included | XIII |
 | Fonts bundled locally or safe fallbacks | XVI |
 | Fully static — no JavaScript required to view | — |
-| Exported HTML opened via "Open HTML" action in new browser tab | — |
+| Exported HTML opened via "Open HTML" in new browser tab | — |
 
-### 15.3 Watermark
+### 13.3 Watermark
 
 - Default text: `Exported by ChatFrame`
 - Enabled by default; user can disable in export settings.
 - Custom watermark text is NOT part of MVP.
 
----
+### 13.4 Backend Module: `HtmlExporter`
 
-## 16. Mock Conversation Requirements
+`export/HtmlExporter.ts` responsibilities:
+- Generate `conversation.html` from render model.
+- Copy chat renderer CSS into `assets/`.
+- Bundle fonts locally in `assets/fonts/`.
+- Copy images into `assets/media/`.
+- Apply privacy settings (name, phone, alias).
+- Apply theme (light/dark).
+- Add/remove watermark based on settings.
+- Ensure exported HTML is fully independent of the app.
+- Ensure session files are NEVER included.
 
-A synthetic mock conversation MUST be created before WhatsApp integration.
-It powers development and testing of the preview, export, and normalization
-pipeline (Constitution XX).
+### 13.5 API Endpoints Introduced
 
-The mock conversation MUST include:
+| Method | Path | Description |
+|---|---|---|
+| `POST` | `/api/projects/:projectId/export/html` | Generate HTML export |
 
-| Scenario | Purpose |
-|---|---|
-| Arabic text message | RTL rendering |
-| English text message | LTR rendering |
-| Mixed Arabic/English message | BiDi handling |
-| Emoji-only message | Emoji rendering |
-| Outgoing message | Right-aligned bubble |
-| Incoming message | Left-aligned bubble |
-| Image message | Image inside bubble |
-| Image with caption | Caption below image |
-| Reply to text | Quoted block rendering |
-| Reply to image | Image reference in quote |
-| Unresolved reply | Missing reference handling |
-| Deleted message | Deleted indicator |
-| Edited message | Edited label |
-| Unsupported message type | Unsupported card |
-| Multiple date separators | Date grouping |
-| Long message (500+ chars) | Text wrapping |
-| Missing image placeholder | Placeholder rendering |
-| Consecutive same-sender messages | Grouped bubble styling |
-| Timestamp with seconds | HH:MM:SS format |
+### 13.6 Screen: Export Settings
 
----
+**Purpose:** Let user decide privacy and export options.
 
-## 17. Development Phases
+| Setting | Type | Default |
+|---|---|---|
+| Show contact name | Toggle | Yes |
+| Show phone number | Toggle | No |
+| Display alias | Text input | Empty (optional) |
+| Fake avatar | Required | Always on |
+| Watermark | Toggle | Enabled ("Exported by ChatFrame") |
+| Theme | Light / Dark | Current preview theme |
 
-### Phase 1: Repository Foundation and Tooling
+**Requirements:**
+- Privacy settings MUST affect both preview and export.
+- Export format is HTML only in MVP.
 
-**Goal:** Stable full-stack TypeScript monorepo with tooling.
+**Actions:** Export HTML · Back to Preview
 
-**Tasks:**
-- Initialize pnpm workspace with `backend/`, `frontend/`, `packages/shared/`.
-- Configure TypeScript strict mode for all packages.
-- Set up Fastify backend with health endpoint.
-- Set up React + Vite frontend with basic shell.
-- Configure Vitest for all packages.
-- Add linting (ESLint) and formatting (Prettier).
-- Add Inter and IBM Plex Sans Arabic fonts.
-- Configure i18n files (Arabic + English) with RTL/LTR handling.
-- Set up Zustand stores (language, theme).
-- Set up TanStack Query provider.
-- Set up React Router v7 with wizard routes.
-- Configure `.env` with default ports (3714, 5173).
+### 13.7 Screen: Export Complete
 
-**Definition of Done:**
-- `pnpm dev` starts both backend and frontend.
-- Frontend calls backend health endpoint successfully.
-- Strict TypeScript — zero errors.
-- Arabic RTL and English LTR switch works.
-- Basic app shell visible in browser.
+**Purpose:** Confirm successful export.
 
----
+**Requirements:**
+- Show export folder path and main HTML file path.
+- "Open HTML" opens the file in a new browser tab.
+- "Open Folder" opens the OS file explorer (if supported).
+- Session files MUST NOT be in the export.
 
-### Phase 2: Shared Contracts and Mock Data
+**Actions:** Open HTML · Open Folder · Start New Import
 
-**Goal:** Build the app around project-owned types before WhatsApp.
+### 13.8 Definition of Done
 
-**Tasks:**
-- Define all shared types in `packages/shared/`:
-  ChatSummary, RawWhatsAppMessage, NormalizedMessage, QualityReport,
-  RenderModel, ConnectionState, ImportProgress, ExportSettings.
-- Add Zod schemas for each type.
-- Create `MockAdapter` implementing `WhatsAppAdapter` interface.
-- Create synthetic conversation fixture (see §16).
-- Build mock API endpoints (chat list, preview).
-- Build API client layer in frontend (TanStack Query hooks).
-- Render mock chat list in chat picker screen.
-- Render mock conversation in preview screen.
-
-**Definition of Done:**
-- Mock data powers full UI flow.
-- No WhatsApp connection needed.
-- Frontend and backend agree on shared contracts.
-- Mock data covers all scenarios from §16.
+- [ ] HTML opens in browser without backend running.
+- [ ] Images load from local `assets/media/`.
+- [ ] Fonts load from local `assets/fonts/` or system fallbacks.
+- [ ] Watermark appears when enabled, hidden when disabled.
+- [ ] Privacy settings obeyed (name, phone, alias).
+- [ ] Session files excluded from export folder.
+- [ ] Export matches preview closely.
 
 ---
 
-### Phase 3: Project Folder Storage
+## 14. Phase 10: Hardening, QA, and MVP Polish
 
-**Goal:** Implement local filesystem storage.
+**Goal:** Make the MVP reliable enough for real personal use. No new
+features — only stability, polish, and verification.
 
-**Tasks:**
-- Implement `ProjectStore` (create, read, rename, get paths).
-- Implement deterministic project folder naming.
-- Implement `NdjsonWriter` and `NdjsonReader` (streaming).
-- Implement `JsonFile` (read/write JSON with Zod validation).
-- Implement `MediaStore` (image save/retrieve).
-- Create `project.json` manifest schema.
-- Ensure raw/normalized/export directory separation.
-- Add tests for path generation, NDJSON read/write, project lifecycle.
+### 14.1 Backend Hardening
 
-**Definition of Done:**
-- Backend creates well-structured project folders.
-- NDJSON streaming works for large files.
-- Raw and normalized directories are strictly separate.
-- Tests cover all storage operations.
+- Improve error messages across all error types (Constitution XIX):
 
----
+  ```text
+  WhatsApp connection errors    authentication/session errors
+  import errors                 media download errors
+  normalization warnings        storage errors
+  export errors                 unsupported message types
+  ```
 
-### Phase 4: Normalization Engine
-
-**Goal:** Build the core intelligence — testable without WhatsApp.
-
-**Tasks:**
-- Implement `normalizeMessage` (raw → normalized mapping).
-- Implement `normalizeTimestamp` (preserve original + derive ISO).
-- Implement message sorting by normalized timestamp.
-- Implement `dedupeMessages` (prefer most complete record).
-- Implement `resolveReplies` (best-effort linking).
-- Implement image linking (match media IDs to files).
-- Implement unsupported message handling (preserve, never drop).
-- Implement deleted/edited state handling.
-- Implement `buildQualityReport`.
-- Implement `buildRenderModel`.
-- Add comprehensive tests using synthetic fixtures.
-
-**Frontend tasks:**
-- Update preview screen to consume real render model.
-- Build quality report screen components.
-- Build unsupported message card component.
-- Build missing image placeholder component.
-
-**Definition of Done:**
-- Synthetic raw messages → normalized output → render model pipeline works.
-- Tests cover: normalization, sorting, dedup, replies, missing images,
-  quality report, unsupported messages.
-- Frontend renders render model accurately.
-- No frontend parsing of raw messages.
-
----
-
-### Phase 5: WhatsApp Session Integration
-
-**Goal:** Connect to WhatsApp locally using `whatsapp-web.js`.
-
-**Tasks:**
-- Implement `WhatsAppAdapter` interface.
-- Implement `WhatsappWebJsAdapter`:
-  - Session initialization and QR event handling.
-  - Connection state machine with SSE broadcasting.
-  - Session restore from local storage.
-  - Logout/unlink with session cleanup.
-  - Session file protection.
-- Ensure QR/session secrets are NEVER logged.
-- Ensure no send-message methods are exposed.
-
-**Frontend tasks:**
-- Build QR connection screen with real SSE events.
-- Build connection status component.
-- Build disclaimer banner.
-- Add reconnect and logout actions.
-
-**Definition of Done:**
-- User can scan QR and establish connection.
-- Connection state updates live via SSE.
-- Session restores on app restart.
-- Logout clears session files.
-- No QR codes or tokens in any log output.
-
----
-
-### Phase 6: Real Chat Listing
-
-**Goal:** List one-to-one WhatsApp chats from a live connection.
-
-**Tasks:**
-- Implement `listPrivateChats` in adapter (filter groups).
-- Map WhatsApp chat data to `ChatSummary`.
-- Expose `GET /api/chats/private` endpoint.
-- Handle disconnected session errors gracefully.
-
-**Frontend tasks:**
-- Connect chat picker to real API.
-- Add search filtering.
-- Add empty state and loading state.
-- Ensure groups are never selectable.
-
-**Definition of Done:**
-- User sees real private chats.
-- Groups are filtered out.
-- Selection works end-to-end.
-
----
-
-### Phase 7: Real Message and Image Import
-
-**Goal:** Import text messages and images from a selected chat.
-
-**Tasks:**
-- Implement `ImportOrchestrator`:
-  - Fetch messages via adapter (streaming `AsyncIterable`).
-  - Save raw messages to NDJSON (immutable).
-  - Download images when enabled.
-  - Save images to `media/images/`.
-  - Save raw media metadata.
-  - Emit progress events via SSE.
-  - Handle failed image downloads gracefully.
-- Run normalization pipeline after raw import.
-- Generate quality report.
-- Build render model.
-
-**Frontend tasks:**
-- Build import options screen (text-only vs. text+images).
-- Build import progress screen with real SSE events.
-- Show warnings in-flight.
-- Show completion state.
-
-**Definition of Done:**
-- User imports one real chat — text and optional images.
-- Raw files written (immutable).
-- Normalized files derived.
-- Quality report generated.
-- Import is explicitly user-triggered, read-only.
-- Missing images handled without crash.
-
----
-
-### Phase 8: WhatsApp-Like Preview
-
-**Goal:** Accurate preview before export, using virtual scrolling.
-
-**Tasks:**
-- Serve paginated render model via preview API.
-- Serve images via `/api/media/:projectId/:filename`.
-- Apply privacy settings to render model.
-
-**Frontend tasks:**
-- Finalize virtual scrolling in `ConversationPreview`.
-- Finalize all bubble components: `MessageBubble`, `ReplyPreview`,
-  `ImageMessage`, `DateSeparator`, `UnsupportedMessage`.
-- Add light/dark mode toggle.
-- Add font size and conversation width controls.
-- Apply privacy settings live in preview.
-- Fake avatar display.
-
-**Definition of Done:**
-- Preview visually resembles WhatsApp.
-- Virtual scrolling handles 10,000+ messages smoothly.
-- Privacy settings affect preview in real-time.
-- All rendering uses normalized data only.
-- RTL/LTR works correctly for mixed content.
-
----
-
-### Phase 9: HTML Export
-
-**Goal:** Generate offline HTML export with local assets.
-
-**Tasks:**
-- Implement `HtmlExporter`:
-  - Generate `conversation.html` from render model.
-  - Copy chat renderer CSS into `assets/`.
-  - Bundle fonts locally in `assets/fonts/`.
-  - Copy images into `assets/media/`.
-  - Apply privacy settings.
-  - Apply theme (light/dark).
-  - Add/remove watermark based on settings.
-  - Ensure exported HTML is fully independent.
-  - Ensure session files are NEVER included.
-
-**Frontend tasks:**
-- Build export settings screen (privacy + watermark + theme).
-- Build export complete screen.
-- Trigger HTML export via API.
-- Display output path.
-- "Open HTML" opens in new browser tab.
-- "Open Folder" attempts to open OS explorer.
-
-**Definition of Done:**
-- HTML opens in browser without backend running.
-- Images load from local `assets/media/`.
-- Fonts load from local `assets/fonts/` or system fallbacks.
-- Watermark appears when enabled.
-- Privacy settings obeyed.
-- Session files excluded.
-- Export matches preview closely.
-
----
-
-### Phase 10: Hardening, QA, and MVP Polish
-
-**Goal:** Make the MVP reliable for real personal use.
-
-**Backend tasks:**
-- Improve error messages across all error types (Constitution XIX).
-- Strengthen runtime validation at all boundaries.
-- Add import cancellation.
-- Add edge case tests.
-- Dependency review and lock.
-- Log sanitization audit.
+- Strengthen runtime validation at all API boundaries.
+- Add import cancellation support.
+- Add edge case tests for normalization.
+- Dependency review and `pnpm-lock.yaml` audit.
+- Log sanitization audit — ensure no secrets leak.
 - Large conversation smoke test (5,000+ messages).
 
-**Frontend tasks:**
+### 14.2 Frontend Polish
+
 - Polish UI spacing, loading states, empty states, error states.
 - Polish Arabic and English copy.
 - Verify RTL/LTR across all screens.
@@ -1394,16 +1417,33 @@ The mock conversation MUST include:
 - Verify responsive desktop behavior.
 - Accessibility pass (keyboard navigation, focus states).
 
-**Definition of Done:**
-- Full flow works: connect → select → import → preview → export.
-- No known constitution violations.
-- No hidden cloud calls, no database, no message sending.
-- No QR/session secrets in logs.
-- Known limitations documented.
+### 14.3 End-to-End Verification
+
+Full flow MUST work:
+
+```text
+connect → select chat → import → quality report → preview → export
+```
+
+### 14.4 Definition of Done
+
+- [ ] Full flow works end-to-end with a real WhatsApp chat.
+- [ ] No known constitution violations.
+- [ ] No hidden cloud calls, no database, no message sending.
+- [ ] No QR/session secrets in logs.
+- [ ] Error messages are clear and user-friendly.
+- [ ] RTL/LTR verified on every screen.
+- [ ] Light/dark mode verified on every screen.
+- [ ] Large conversation (5,000+ messages) completes without crash.
+- [ ] Known limitations documented.
 
 ---
 
-## 18. Constitution Compliance Matrix
+# Part III — Governance
+
+---
+
+## 15. Constitution Compliance Matrix
 
 | # | Principle | How Addressed |
 |---|---|---|
@@ -1435,7 +1475,7 @@ The mock conversation MUST include:
 
 ---
 
-## 19. Risks and Mitigations
+## 16. Risks and Mitigations
 
 | Risk | Mitigation |
 |---|---|
@@ -1451,7 +1491,7 @@ The mock conversation MUST include:
 
 ---
 
-## 20. Non-Negotiable Implementation Rules
+## 17. Non-Negotiable Implementation Rules
 
 All code — human-written or AI-generated — MUST follow these rules:
 
@@ -1474,7 +1514,7 @@ All code — human-written or AI-generated — MUST follow these rules:
 
 ---
 
-## 21. Acceptance Criteria
+## 18. Acceptance Criteria
 
 The MVP is complete when ALL of the following are true:
 
@@ -1523,9 +1563,9 @@ The MVP is complete when ALL of the following are true:
 
 ---
 
-## 22. MVP Completion Checklist
+## 19. MVP Completion Checklist
 
-### Foundation
+### Phase 1: Foundation
 - [ ] pnpm workspace monorepo initialized
 - [ ] Backend project initialized (Fastify + TypeScript)
 - [ ] Frontend project initialized (React + Vite + TypeScript)
@@ -1533,74 +1573,86 @@ The MVP is complete when ALL of the following are true:
 - [ ] Strict TypeScript configured for all packages
 - [ ] Vitest configured for all packages
 - [ ] ESLint + Prettier configured
+- [ ] Welcome / language screen with RTL/LTR switch
 
-### Shared Contracts
+### Phase 2: Contracts and Mocks
 - [ ] All shared types defined with Zod schemas
+- [ ] `WhatsAppAdapter` interface defined
 - [ ] Mock adapter created
 - [ ] Synthetic conversation fixture created
+- [ ] Mock API endpoints serving fixture data
+- [ ] Frontend wizard flow powered by mock data
 
-### Storage
+### Phase 3: Storage
 - [ ] Project folder storage implemented
 - [ ] NDJSON reader/writer implemented (streaming)
 - [ ] Media store implemented
+- [ ] Project CRUD API working
 - [ ] Storage tests passing
 
-### Normalization
+### Phase 4: Normalization
 - [ ] Message normalization implemented
 - [ ] Timestamp normalization implemented
 - [ ] Deduplication implemented
 - [ ] Reply resolution implemented
 - [ ] Quality report generation implemented
 - [ ] Render model generation implemented
+- [ ] Quality report screen built
 - [ ] Normalization tests passing
 
-### WhatsApp Integration
-- [ ] WhatsApp adapter interface defined
+### Phase 5: WhatsApp Session
 - [ ] `whatsapp-web.js` adapter implemented
-- [ ] QR connection working
+- [ ] QR connection working via SSE
 - [ ] Session restore working
 - [ ] Logout/unlink working
-- [ ] Private chat listing working
-- [ ] Message import working
-- [ ] Image import working
+- [ ] Disclaimer banner visible
+- [ ] No secrets in logs
 
-### Frontend Screens
-- [ ] Welcome / language screen
-- [ ] WhatsApp connection screen (QR + disclaimer)
-- [ ] Chat picker screen (search + select)
-- [ ] Import options screen
-- [ ] Import progress screen (SSE)
-- [ ] Quality report screen
-- [ ] Preview screen (virtual scrolling)
-- [ ] Export settings screen
-- [ ] Export complete screen
+### Phase 6: Chat Listing
+- [ ] Private chat listing working (groups filtered)
+- [ ] Chat picker screen with search
+- [ ] Fake avatars used
 
-### Preview and Renderer
-- [ ] WhatsApp-like message bubbles
+### Phase 7: Import
+- [ ] Message import working (streaming)
+- [ ] Image import working (optional)
+- [ ] Raw NDJSON storage (immutable)
+- [ ] Normalization runs after import
+- [ ] Quality report generated
+- [ ] Import progress screen with SSE
+- [ ] Import cancellation supported
+
+### Phase 8: Preview
+- [ ] WhatsApp-like message bubbles (custom CSS)
+- [ ] Virtual scrolling for large conversations
 - [ ] Reply previews
 - [ ] Date separators
-- [ ] Image messages
+- [ ] Image messages with captions
 - [ ] Unsupported message cards
 - [ ] Missing image placeholders
-- [ ] Light/dark mode
+- [ ] Light/dark mode toggle
 - [ ] RTL/LTR verified
+- [ ] Privacy settings affect preview live
 
-### Export
+### Phase 9: Export
 - [ ] HTML exporter implemented
 - [ ] Local assets folder generated
 - [ ] Fonts bundled for offline use
-- [ ] Privacy settings applied
+- [ ] Privacy settings applied to export
 - [ ] Watermark toggle working
 - [ ] Offline HTML verified
 - [ ] Session files excluded
+- [ ] Export matches preview
 
-### Quality and Compliance
-- [ ] No database
-- [ ] No cloud calls
-- [ ] No telemetry
+### Phase 10: Hardening
+- [ ] Error messages clear and user-friendly
+- [ ] No database, no cloud calls, no telemetry
 - [ ] No message sending
 - [ ] No QR/session secrets in logs
 - [ ] No `any` in core modules
+- [ ] Large conversation smoke test passing
+- [ ] RTL/LTR verified across all screens
+- [ ] Light/dark verified across all screens
 - [ ] Constitution compliance verified
 
 ---
