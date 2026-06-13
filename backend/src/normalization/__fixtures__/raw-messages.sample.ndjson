@@ -1,0 +1,13 @@
+{"id":"m1","chatId":"chat-1","fromMe":false,"author":"contact-1","timestamp":1780000000,"type":"chat","body":"السلام عليكم! كيف حالك؟","hasMedia":false}
+{"id":"m2","chatId":"chat-1","fromMe":true,"author":"me","timestamp":1780000120,"type":"chat","body":"وعليكم السلام، بخير الحمد لله 🙂","hasMedia":false}
+{"id":"m3","chatId":"chat-1","fromMe":false,"author":"contact-1","timestamp":1780000300,"type":"image","body":"","hasMedia":true,"mediaId":"img-1","caption":"Sunset"}
+{"id":"m4","chatId":"chat-1","fromMe":true,"author":"me","timestamp":1780000500,"type":"revoked","body":"","hasMedia":false}
+{"id":"m5","chatId":"chat-1","fromMe":false,"author":"contact-1","timestamp":1780000700,"type":"audio","body":"","hasMedia":true,"mediaId":"aud-1"}
+{"id":"m6","chatId":"chat-1","fromMe":false,"author":"contact-1","timestamp":1780000900,"type":"sticker","body":"","hasMedia":true,"mediaId":"stk-1"}
+{"id":"m7","chatId":"chat-1","fromMe":true,"author":"me","timestamp":1780001100,"type":"chat","body":"This replies to your first message","hasMedia":false,"quotedMessageId":"m1"}
+{"id":"m8","chatId":"chat-1","fromMe":false,"author":"contact-1","type":"chat","body":"This message has no timestamp","hasMedia":false}
+{"id":"m9","chatId":"chat-1","fromMe":true,"author":"me","timestamp":4102444800,"type":"chat","body":"This is from the year 2100","hasMedia":false}
+{"id":"m1","chatId":"chat-1","fromMe":false,"author":"contact-1","timestamp":1780000000,"type":"chat","body":"السلام عليكم! كيف حالك؟","hasMedia":false,"isEdited":true}
+{"id":"m11","chatId":"chat-1","fromMe":true,"author":"me","timestamp":1780001500,"type":"chat","body":"Edited message","hasMedia":false,"isEdited":true}
+{bad json not parseable}
+{"id":"m13","chatId":"chat-1"}

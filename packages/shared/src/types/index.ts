@@ -6,3 +6,5 @@
 
 /** Nominal typing helper for future branded IDs (e.g. `Brand<string, 'ProjectId'>`). */
 export type Brand<T, B extends string> = T & { readonly __brand: B };
+
+export * from './session';

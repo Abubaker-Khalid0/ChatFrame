@@ -1,13 +1,11 @@
 <!-- SPECKIT START -->
 For additional context about technologies to be used, project structure,
 shell commands, and other important information, read the current plan:
-`specs/002-shared-contracts-mock-data/plan.md`
+`specs/010-hardening-qa-mvp-polish/plan.md`
 
-Related design artifacts for the active feature (`002-shared-contracts-mock-data`):
-- `specs/002-shared-contracts-mock-data/research.md`
-- `specs/002-shared-contracts-mock-data/data-model.md`
-- `specs/002-shared-contracts-mock-data/contracts/chats.md`
-- `specs/002-shared-contracts-mock-data/contracts/preview.md`
-- `specs/002-shared-contracts-mock-data/contracts/adapter.md`
-- `specs/002-shared-contracts-mock-data/quickstart.md`
+Related design artifacts for the active feature (`010-hardening-qa-mvp-polish`):
+- `specs/010-hardening-qa-mvp-polish/research.md`
+- `specs/010-hardening-qa-mvp-polish/data-model.md`
+- `specs/010-hardening-qa-mvp-polish/contracts/hardening-audit-contract.md`
+- `specs/010-hardening-qa-mvp-polish/quickstart.md`
 <!-- SPECKIT END -->

@@ -1,0 +1,2 @@
+# Storage primitives (NdjsonWriter, NdjsonReader, JsonFile, MediaStore) are
+# added in Phase 4+. This placeholder keeps the directory tracked until then.

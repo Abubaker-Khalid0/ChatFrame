@@ -2,6 +2,7 @@ import { Outlet } from 'react-router-dom';
 import { useTranslations } from '../../i18n';
 import { LanguageSwitcher } from './LanguageSwitcher';
 import { HealthIndicator } from './HealthIndicator';
+import { StepHeader } from './StepHeader';
 
 /**
  * Application shell: a persistent header hosting the language switcher
@@ -21,6 +22,7 @@ export function AppShell() {
         </div>
         <LanguageSwitcher />
       </header>
+      <StepHeader />
       <main className="flex flex-1 items-center justify-center p-6">
         <Outlet />
       </main>

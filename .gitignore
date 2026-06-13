@@ -38,6 +38,7 @@ session-*/
 # Project folders contain user conversations and media — private by default.
 # ----------------------------------------------------------------------------
 workspace/
+chatframe-data/
 
 # ----------------------------------------------------------------------------
 # Logs
@@ -98,3 +99,8 @@ tmp/
 temp/
 *.bak
 *.orig
+
+# ----------------------------------------------------------------------------
+# Spec-kit specifications (not published to the repository)
+# ----------------------------------------------------------------------------
+specs/

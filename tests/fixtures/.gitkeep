@@ -1,0 +1,7 @@
+# Reserved for cross-package test fixtures.
+#
+# NOTE: The Phase 2 (002-shared-contracts-mock-data) mock fixtures live in
+# `backend/src/whatsapp/fixtures/` instead of here, because the backend
+# tsconfig sets `rootDir: "src"` and would reject imports of files outside it
+# (TS6059). Keep this directory for future fixtures that are not imported by
+# the backend build (e.g. data consumed only by test runners).
