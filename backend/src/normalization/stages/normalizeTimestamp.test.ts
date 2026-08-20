@@ -48,6 +48,48 @@ describe('normalizeTimestamp (FR-003)', () => {
     });
 
     expect(result.epochMs).toBe(FALLBACK_MS);
+    // MAX_SAFE_INTEGER triggers the millisecond heuristic first (>7.3e9), then
+    // after correction the value is still out of the representable Date range,
+    // so both TIMESTAMP_CORRECTED and MISSING_TIMESTAMP are emitted.
+    expect(result.warnings.map((w) => w.code)).toEqual([
+      'TIMESTAMP_CORRECTED',
+      'MISSING_TIMESTAMP',
+    ]);
+  });
+
+  it('auto-corrects a millisecond timestamp to seconds', () => {
+    // 1_780_000_000_000 ms → 1_780_000_000 seconds (a date in 2026).
+    const milliseconds = 1_780_000_000_000;
+    const result = normalizeTimestamp({
+      timestamp: milliseconds,
+      fallbackMs: FALLBACK_MS,
+      nowMs: NOW_MS,
+    });
+
+    expect(result.epochMs).toBe(1_780_000_000_000); // corrected to seconds * 1000
+    expect(result.warnings.map((w) => w.code)).toEqual(['TIMESTAMP_CORRECTED']);
+  });
+
+  it('rejects a negative timestamp as invalid', () => {
+    const result = normalizeTimestamp({
+      timestamp: -100,
+      fallbackMs: FALLBACK_MS,
+      nowMs: NOW_MS,
+    });
+
+    expect(result.epochMs).toBe(FALLBACK_MS);
+    expect(result.warnings.map((w) => w.code)).toEqual(['MISSING_TIMESTAMP']);
+  });
+
+  it('rejects a pre-2009 timestamp as implausible for WhatsApp', () => {
+    // 2005-01-01 in seconds — WhatsApp did not exist yet.
+    const result = normalizeTimestamp({
+      timestamp: 1_104_537_600,
+      fallbackMs: FALLBACK_MS,
+      nowMs: NOW_MS,
+    });
+
+    expect(result.epochMs).toBe(FALLBACK_MS);
     expect(result.warnings.map((w) => w.code)).toEqual(['MISSING_TIMESTAMP']);
   });
 });

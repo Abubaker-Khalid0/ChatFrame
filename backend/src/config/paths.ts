@@ -41,6 +41,14 @@ export function whatsappWebJsSessionPath(): string {
 }
 
 /**
+ * Returns the directory used by Baileys `useMultiFileAuthState` for
+ * session/auth credentials. Replaces the Chromium-based session storage.
+ */
+export function baileysSessionPath(): string {
+  return join(SESSION_DIR, 'baileys-auth');
+}
+
+/**
  * The deepest-nested path a project ever produces, relative to the project
  * folder root. Used to estimate the worst-case absolute path length at project
  * creation time (research §3).

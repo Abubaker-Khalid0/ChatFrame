@@ -1,6 +1,7 @@
 import { type ReactNode, useEffect, useState } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useLanguageStore } from '../stores/useLanguageStore';
+import { useThemeStore } from '../stores/useThemeStore';
 
 /**
  * Applies the selected language/direction to the document root whenever it
@@ -16,6 +17,20 @@ function DirectionEffect() {
     root.lang = language;
     root.dir = direction;
   }, [language, direction]);
+
+  return null;
+}
+
+/**
+ * Applies the dashboard theme (`data-theme` attribute) to the document root.
+ * Components and globals.css use `[data-theme='dark']` selectors to swap tokens.
+ */
+function ThemeEffect() {
+  const theme = useThemeStore((s) => s.theme);
+
+  useEffect(() => {
+    document.documentElement.dataset.theme = theme;
+  }, [theme]);
 
   return null;
 }
@@ -41,6 +56,7 @@ export function AppProviders({ children }: { children: ReactNode }) {
   return (
     <QueryClientProvider client={queryClient}>
       <DirectionEffect />
+      <ThemeEffect />
       {children}
     </QueryClientProvider>
   );

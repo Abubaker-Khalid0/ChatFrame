@@ -13,6 +13,13 @@ import { StorageError } from '../utils/errors';
  * effectively immutable once written (FR-005, SC-007). Backpressure is honored
  * by awaiting `'drain'` when the internal buffer fills.
  *
+ * Robustness (Phase 10 hardening):
+ * - JSON serialization failures (circular references, BigInt) are caught per-
+ *   record and throw a descriptive StorageError rather than crashing the stream.
+ * - Stream errors captured asynchronously are re-raised with full context.
+ * - The writer tracks the number of records successfully written, available for
+ *   diagnostics via {@link recordsWritten}.
+ *
  * Intended for the single-import-at-a-time model (no file locking — spec
  * clarification Q5). Always `close()` the writer to flush buffered bytes.
  */
@@ -20,9 +27,15 @@ export class NdjsonWriter {
   private readonly path: string;
   private streamPromise: Promise<WriteStream> | null = null;
   private streamError: Error | null = null;
+  private _recordsWritten = 0;
 
   constructor(path: string) {
     this.path = path;
+  }
+
+  /** Number of records successfully appended since construction. */
+  get recordsWritten(): number {
+    return this._recordsWritten;
   }
 
   /** Lazily opens the append stream, creating parent directories once. */
@@ -45,19 +58,52 @@ export class NdjsonWriter {
   /**
    * Appends one record as a single JSON line. Honors stream backpressure by
    * awaiting `'drain'` when the buffer is full.
+   *
+   * @throws {StorageError} when the stream is in an error state or the record
+   *   cannot be serialized to JSON.
    */
   async writeRecord(record: unknown): Promise<void> {
-    if (this.streamError) {
-      throw new StorageError(`Failed to write NDJSON to '${this.path}'`);
+    // Check 1: fast-fail if the stream is already broken.
+    if (this.streamError !== null) {
+      throw new StorageError(
+        `Cannot write to '${this.path}': stream is in error state (${this.streamError.message})`,
+      );
     }
+
+    // Serialize outside the stream write so serialization failures (circular
+    // refs, BigInt, undefined-only objects) get a clear diagnostic.
+    let line: string;
+    try {
+      line = `${JSON.stringify(record)}\n`;
+    } catch (serializationError) {
+      const detail =
+        serializationError instanceof Error ? serializationError.message : 'unknown cause';
+      throw new StorageError(
+        `Failed to serialize record #${this._recordsWritten + 1} for '${this.path}': ${detail}`,
+      );
+    }
+
     const stream = await this.getStream();
-    const line = `${JSON.stringify(record)}\n`;
     const flushed = stream.write(line);
     if (!flushed) {
       await once(stream, 'drain');
     }
-    if (this.streamError) {
-      throw new StorageError(`Failed to write NDJSON to '${this.path}'`);
+    // Check 2: re-check for errors that occurred during the async write/drain.
+    this.throwIfError(
+      `Write to '${this.path}' failed after record #${this._recordsWritten + 1}`,
+    );
+    this._recordsWritten += 1;
+  }
+
+  /**
+   * Checks whether the stream has entered an error state, throwing a
+   * {@link StorageError} with context if so. This helper avoids TypeScript
+   * narrowing issues where `this.streamError` is narrowed to `null` after a
+   * prior throw guard in the same method.
+   */
+  private throwIfError(context: string): void {
+    if (this.streamError !== null) {
+      throw new StorageError(`${context}: ${this.streamError.message}`);
     }
   }
 
@@ -70,8 +116,13 @@ export class NdjsonWriter {
     this.streamPromise = null;
     await new Promise<void>((resolve, reject) => {
       stream.end(() => {
-        if (this.streamError) {
-          reject(new StorageError(`Failed to finalize NDJSON file '${this.path}'`));
+        const error = this.streamError;
+        if (error) {
+          reject(
+            new StorageError(
+              `Failed to finalize NDJSON file '${this.path}' after ${this._recordsWritten} records: ${error.message}`,
+            ),
+          );
         } else {
           resolve();
         }

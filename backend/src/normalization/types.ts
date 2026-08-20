@@ -22,6 +22,12 @@ export interface MappedMessage {
   rawMediaId?: string;
   /** Source caption for media messages (consumed by linkImages, US7). */
   rawCaption?: string;
+  /**
+   * Real sender phone digits resolved from the source contact, threaded to
+   * participant resolution so the conversation header can show the actual
+   * number instead of one parsed from an opaque id (e.g. WhatsApp `@lid`).
+   */
+  senderPhoneNumber?: string;
 }
 
 /**

@@ -1,6 +1,6 @@
 import { env } from '../config/env';
 import { MockAdapter } from './MockAdapter';
-import { WhatsappWebJsAdapter, type AdapterLogger } from './WhatsappWebJsAdapter';
+import { BaileysAdapter, type AdapterLogger } from './BaileysAdapter';
 import type { WhatsAppAdapter } from './WhatsAppAdapter';
 
 let instance: WhatsAppAdapter | null = null;
@@ -10,13 +10,13 @@ let adapterLogger: AdapterLogger | undefined;
 /**
  * Returns the active {@link WhatsAppAdapter}, selected by the `MOCK_MODE`
  * environment variable: `MockAdapter` in mock mode, the real
- * {@link WhatsappWebJsAdapter} singleton otherwise (FR-001). The instance is
- * created lazily and cached — one adapter, one Chromium process, one session
- * (research §7).
+ * {@link BaileysAdapter} singleton otherwise (FR-001). The instance is
+ * created lazily and cached — one adapter, one WebSocket connection, one
+ * session.
  */
 export function getAdapter(): WhatsAppAdapter {
   if (instance === null) {
-    instance = env.MOCK_MODE ? new MockAdapter() : new WhatsappWebJsAdapter(adapterLogger);
+    instance = env.MOCK_MODE ? new MockAdapter() : new BaileysAdapter(adapterLogger);
     createdHook?.(instance);
   }
   return instance;

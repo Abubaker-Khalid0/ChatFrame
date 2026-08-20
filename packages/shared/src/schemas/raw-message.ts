@@ -27,6 +27,18 @@ export const RawWhatsAppMessageSchema = z.object({
   fromMe: z.boolean(),
   /** Sender identifier as reported by the source, or `null`. */
   author: z.string().nullable(),
+  /**
+   * Human-readable sender name resolved from the source contact (saved name or
+   * public push name). Lets normalization show the real identity instead of
+   * falling back to the opaque sender id (e.g. WhatsApp `@lid` privacy ids).
+   */
+  senderName: z.string().optional(),
+  /**
+   * Real sender phone number digits (MSISDN) resolved from the source contact.
+   * Distinct from the serialized id's user part, which for `@lid` ids is an
+   * opaque Linked ID rather than the actual number.
+   */
+  senderPhoneNumber: z.string().optional(),
   /** Original source timestamp in Unix **seconds**. Absent → synthetic (FR-003). */
   timestamp: z.number().int().nonnegative().optional(),
   /** Raw, unclassified type string from the source (e.g. `chat`, `image`). */

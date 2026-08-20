@@ -62,7 +62,7 @@ export async function postJson(path: string, body: unknown, init?: RequestInit):
     body: JSON.stringify(body),
   });
   if (!res.ok) {
-    throw new Error(`Request to ${path} failed with status ${res.status}`);
+    throw await toApiError(path, res);
   }
   return res.json();
 }
@@ -79,7 +79,7 @@ export async function patchJson(path: string, body: unknown, init?: RequestInit)
     body: JSON.stringify(body),
   });
   if (!res.ok) {
-    throw new Error(`Request to ${path} failed with status ${res.status}`);
+    throw await toApiError(path, res);
   }
   return res.json();
 }

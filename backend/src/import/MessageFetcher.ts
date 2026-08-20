@@ -11,6 +11,15 @@ import { NdjsonWriter } from '../storage/NdjsonWriter';
  * full conversation is never held in memory (Constitution XVIII). The cancel
  * token is checked before every record so cancellation stops at a safe
  * boundary with all previously written data preserved (research §7).
+ *
+ * Robustness guarantees (Phase 10 hardening):
+ * - Adapter stream errors (network drops, library crashes) are caught and
+ *   rethrown with a descriptive, user-safe message while preserving already-
+ *   written records on disk (raw data remains immutable, Constitution VI).
+ * - Each written record is counted only after the write succeeds, so the
+ *   reported count is always accurate even if a crash interrupts mid-write.
+ * - The NdjsonWriter is always closed in `finally`, ensuring file handles are
+ *   released and buffered bytes flushed regardless of outcome.
  */
 
 export interface MessageFetcherOptions {
@@ -53,10 +62,38 @@ export class MessageFetcher {
           cancelled = true;
           break;
         }
+
+        // Validate basic structural integrity of the adapter output before
+        // persisting. A malformed record (missing id or chatId) from the
+        // adapter is a programming error — surface it clearly rather than
+        // writing corrupted data that will fail at normalization.
+        if (!message.id || !message.chatId) {
+          throw new Error(
+            `Adapter yielded a message without a valid id or chatId (id=${String(message.id)}). ` +
+              `${count} messages were written before this failure.`,
+          );
+        }
+
         await writer.writeRecord(message);
         count += 1;
         this.options.onMessage?.(count, message);
       }
+    } catch (error) {
+      // Re-wrap adapter-originated errors with import context while preserving
+      // the original error chain for debugging. The raw file already contains
+      // all successfully written records up to this point.
+      if (
+        error instanceof Error &&
+        !error.message.startsWith('Adapter yielded') &&
+        !error.message.includes('Failed to write NDJSON')
+      ) {
+        const wrapped = new Error(
+          `Message fetching failed after writing ${count} records: ${error.message}`,
+        );
+        wrapped.cause = error;
+        throw wrapped;
+      }
+      throw error;
     } finally {
       // Always flush buffered lines so partial data survives cancel/failure.
       await writer.close();

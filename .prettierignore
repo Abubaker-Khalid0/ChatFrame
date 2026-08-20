@@ -7,6 +7,9 @@ coverage
 pnpm-lock.yaml
 *.tsbuildinfo
 
+# Local design prototype (standalone Next.js scaffold, not workspace source)
+chatframe
+
 # Spec Kit framework and tooling (not project source)
 .agents
 .kiro

@@ -71,11 +71,25 @@ export function useNormalizationStatus(
  * it against the shared schema (Constitution XIV). Disabled until a non-empty
  * `projectId` is provided; the report is rendered read-only by the frontend
  * (FR-016).
+ *
+ * Robustness (Phase 10 hardening):
+ * - `retry: 3` with a delay ensures the report is fetched even if the quality
+ *   stage mounts moments before the backend finishes writing the file (race
+ *   condition between SSE "completed" event and atomic staging promotion).
+ * - `refetchOnMount: 'always'` ensures a stale cached 404 from a prior fetch
+ *   attempt (when the query was enabled but normalization hadn't completed yet)
+ *   is always replaced with a fresh request on stage entry.
+ * - `staleTime: 0` ensures the data is always considered stale so TanStack
+ *   Query refetches when the component mounts or the query key changes.
  */
 export function useQualityReport(projectId: string | undefined) {
   return useQuery<QualityReport>({
     queryKey: ['quality-report', projectId],
     enabled: Boolean(projectId),
+    retry: 3,
+    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 5000),
+    staleTime: 0,
+    refetchOnMount: 'always',
     queryFn: async () => {
       const data = await getJson(
         `/api/projects/${encodeURIComponent(projectId ?? '')}/quality-report`,
@@ -90,11 +104,17 @@ export function useQualityReport(projectId: string | undefined) {
  * against the shared schema (Constitution XIV). Disabled until a non-empty
  * `projectId` is provided; the model is rendered verbatim by the preview, which
  * performs no parsing or resolution of its own (FR-016, Constitution VII).
+ *
+ * Same robustness pattern as {@link useQualityReport}: retry + always refetch.
  */
 export function useRenderModel(projectId: string | undefined) {
   return useQuery<RenderModel>({
     queryKey: ['render-model', projectId],
     enabled: Boolean(projectId),
+    retry: 3,
+    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 5000),
+    staleTime: 0,
+    refetchOnMount: 'always',
     queryFn: async () => {
       const data = await getJson(
         `/api/projects/${encodeURIComponent(projectId ?? '')}/render-model`,

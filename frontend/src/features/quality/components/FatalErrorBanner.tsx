@@ -10,12 +10,12 @@ export function FatalErrorBanner({ errors }: { errors: QualityError[] }) {
   }
 
   return (
-    <div role="alert" className="rounded-lg border border-red-300 bg-red-50 p-4">
-      <h2 className="text-sm font-bold text-red-800">{t.quality.fatalTitle}</h2>
-      <p className="mt-1 text-sm text-red-700">{t.quality.fatalBody}</p>
+    <div role="alert" className="rounded-lg border border-error/30 bg-error-soft p-4">
+      <h2 className="text-sm font-bold text-error">{t.quality.fatalTitle}</h2>
+      <p className="mt-1 text-sm text-ink-secondary">{t.quality.fatalBody}</p>
       <ul className="mt-2 space-y-1">
         {fatal.map((error, index) => (
-          <li key={`${error.code}-${index}`} className="text-xs text-red-600">
+          <li key={`${error.code}-${index}`} className="text-xs text-error">
             {error.code}: {error.message}
           </li>
         ))}

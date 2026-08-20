@@ -54,4 +54,23 @@ describe('mapMessage (FR-002)', () => {
     const { mapped } = mapMessage(raw({ author: null }), ctx);
     expect(mapped.message.senderId).toBe('chat-1');
   });
+
+  it('sets senderDisplayName from the resolved contact name on received messages', () => {
+    const { mapped } = mapMessage(raw({ senderName: 'Ahmed Ali' }), ctx);
+    expect(mapped.message.senderDisplayName).toBe('Ahmed Ali');
+  });
+
+  it('threads the resolved sender phone number for received messages', () => {
+    const { mapped } = mapMessage(raw({ senderPhoneNumber: '966501234567' }), ctx);
+    expect(mapped.senderPhoneNumber).toBe('966501234567');
+  });
+
+  it('never attaches the resolved identity to the local user (fromMe)', () => {
+    const { mapped } = mapMessage(
+      raw({ fromMe: true, author: 'me', senderName: 'Ahmed', senderPhoneNumber: '966501234567' }),
+      ctx,
+    );
+    expect(mapped.message.senderDisplayName).toBeUndefined();
+    expect(mapped.senderPhoneNumber).toBeUndefined();
+  });
 });

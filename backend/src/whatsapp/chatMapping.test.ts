@@ -133,6 +133,17 @@ describe('toChatSummary', () => {
     expect(summary.phoneNumber).toBe('+966501234567');
   });
 
+  it('nulls a displayName that is a serialized id, never showing it', () => {
+    const summary = toChatSummary({
+      ...raw,
+      id: '222436708581508@lid',
+      name: '222436708581508@lid',
+      user: null,
+    });
+    expect(summary.displayName).toBeNull();
+    expect(summary.phoneNumber).toBeNull();
+  });
+
   it('nulls the phone number for groups', () => {
     const summary = toChatSummary({ ...raw, isGroup: true });
     expect(summary.isGroup).toBe(true);

@@ -6,19 +6,19 @@ export function QualityWarningList({ warnings }: { warnings: QualityWarning[] })
   const t = useTranslations();
 
   if (warnings.length === 0) {
-    return <p className="text-sm text-gray-500">{t.quality.noWarnings}</p>;
+    return <p className="text-sm text-ink-muted">{t.quality.noWarnings}</p>;
   }
 
   return (
     <div>
-      <h2 className="text-sm font-semibold text-gray-700">{t.quality.warningsTitle}</h2>
+      <h2 className="text-sm font-semibold text-ink-secondary">{t.quality.warningsTitle}</h2>
       <ul className="mt-2 space-y-1">
         {warnings.map((warning, index) => (
           <li
             key={`${warning.code}-${index}`}
-            className="flex items-start gap-2 rounded-md bg-amber-50 px-3 py-2 text-sm text-amber-800"
+            className="flex items-start gap-2 rounded-md bg-warning-soft px-3 py-2 text-sm text-ink"
           >
-            <span className="font-mono text-xs text-amber-600">{warning.code}</span>
+            <span className="font-mono text-xs text-warning">{warning.code}</span>
             <span>{warning.message}</span>
             {typeof warning.count === 'number' && (
               <span className="ms-auto font-semibold">×{warning.count}</span>

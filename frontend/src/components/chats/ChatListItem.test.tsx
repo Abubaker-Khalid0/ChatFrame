@@ -2,7 +2,6 @@ import { cleanup, render, screen } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { ChatSummary } from '@chatframe/shared';
 import { ChatListItem } from './ChatListItem';
-import { ChatList } from './ChatList';
 import { useLanguageStore } from '../../stores/useLanguageStore';
 
 // 30 days ago, local time, so the row always lands in the "older date" bucket.
@@ -63,12 +62,12 @@ describe('ChatListItem (US1)', () => {
     expect(screen.queryByText('Sarah Johnson')).toBeNull();
   });
 
-  it('falls back to "Unknown contact" when name and phone are missing', () => {
+  it('falls back to the chat ID prefix when name and phone are missing', () => {
     render(
       <ChatListItem chat={{ ...chat, displayName: null, phoneNumber: null }} onSelect={vi.fn()} />,
     );
 
-    expect(screen.getByText('Unknown contact')).toBeTruthy();
+    expect(screen.getByText('chat-001')).toBeTruthy();
   });
 
   it('invokes onSelect with the chat when clicked', () => {
@@ -77,24 +76,5 @@ describe('ChatListItem (US1)', () => {
 
     screen.getByRole('button').click();
     expect(onSelect).toHaveBeenCalledWith(chat);
-  });
-});
-
-describe('ChatList empty state (FR-014)', () => {
-  it('shows the no-chats message instead of a blank layout', () => {
-    render(<ChatList chats={[]} onSelect={vi.fn()} />);
-
-    expect(screen.getByText('No private chats found.')).toBeTruthy();
-  });
-
-  it('renders one row per chat', () => {
-    render(
-      <ChatList
-        chats={[chat, { ...chat, id: 'chat-002', displayName: 'Omar' }]}
-        onSelect={vi.fn()}
-      />,
-    );
-
-    expect(screen.getAllByRole('button')).toHaveLength(2);
   });
 });

@@ -16,6 +16,16 @@ import { DEFAULT_RETRY_DELAYS_MS, retryWithBackoff } from './retry';
  * continues (Constitution XXIII — no silent data loss). Every outcome is also
  * appended to the immutable `raw/media.raw.ndjson` provenance log
  * (Constitution VI).
+ *
+ * Robustness (Phase 10 hardening):
+ * - Zero-byte downloads are treated as failures: some adapters return an empty
+ *   buffer instead of null when media has expired. These are retried and, if
+ *   still empty after retries, recorded as missing with a specific warning.
+ * - Download timeout detection: individual downloads that hang beyond
+ *   {@link DOWNLOAD_TIMEOUT_MS} are aborted, preventing a single stuck request
+ *   from blocking the entire pool indefinitely.
+ * - Each download outcome is recorded in the provenance log regardless of
+ *   success/failure, providing a complete audit trail of what was attempted.
  */
 
 export interface ImageDownloadWarning {
@@ -23,6 +33,9 @@ export interface ImageDownloadWarning {
   message: string;
   messageId?: string;
 }
+
+/** Per-download timeout in milliseconds (60 seconds, generous for large images). */
+const DOWNLOAD_TIMEOUT_MS = 60_000;
 
 export interface ImageDownloaderOptions {
   adapter: Pick<WhatsAppAdapter, 'downloadImage'>;
@@ -35,6 +48,8 @@ export interface ImageDownloaderOptions {
   retryDelaysMs?: readonly number[];
   /** Injectable delay for deterministic tests. */
   sleep?: (ms: number) => Promise<void>;
+  /** Per-download timeout in milliseconds (default 60s). */
+  downloadTimeoutMs?: number;
   /** Progress callback: images settled so far out of the known total. */
   onImage?: (downloaded: number, total: number) => void;
   /** Non-fatal issue reporting (FR-012, FR-016). */
@@ -112,9 +127,17 @@ export class ImageDownloader {
     try {
       const media = await retryWithBackoff(
         async () => {
-          const result = await this.options.adapter.downloadImage(message);
+          const result = await this.withTimeout(
+            this.options.adapter.downloadImage(message),
+            this.options.downloadTimeoutMs ?? DOWNLOAD_TIMEOUT_MS,
+          );
           if (result === null) {
             throw new Error('Media unavailable');
+          }
+          // Treat zero-byte buffers as failed downloads — some adapters return
+          // empty buffers when media has expired on WhatsApp servers.
+          if (result.buffer.length === 0) {
+            throw new Error('Media returned empty buffer');
           }
           return result;
         },
@@ -162,6 +185,32 @@ export class ImageDownloader {
       });
       return 'missing';
     }
+  }
+
+  /**
+   * Wraps a promise with a timeout. If the download hangs beyond the specified
+   * duration, the returned promise rejects so the retry loop can attempt again
+   * or declare the media missing — preventing a single stuck request from
+   * blocking the entire pool.
+   */
+  private withTimeout<T>(promise: Promise<T>, timeoutMs: number): Promise<T> {
+    if (timeoutMs <= 0 || !Number.isFinite(timeoutMs)) return promise;
+    return new Promise<T>((resolve, reject) => {
+      const timer = setTimeout(
+        () => reject(new Error(`Download timed out after ${timeoutMs}ms`)),
+        timeoutMs,
+      );
+      promise.then(
+        (value) => {
+          clearTimeout(timer);
+          resolve(value);
+        },
+        (error) => {
+          clearTimeout(timer);
+          reject(error);
+        },
+      );
+    });
   }
 
   private rawMetadata(

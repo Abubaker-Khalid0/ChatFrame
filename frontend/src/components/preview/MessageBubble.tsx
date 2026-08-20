@@ -8,12 +8,10 @@ import { ImageMessage } from './ImageMessage';
 const LOCALES: Record<string, string> = { en: 'en-US', ar: 'ar' };
 
 /**
- * A single conversation bubble (008 FR-008/010/013/014/022/026). Outgoing
- * messages sit on the right, incoming on the left — the WhatsApp convention,
- * held stable regardless of the app shell's direction by the renderer CSS.
- * Text direction is resolved per message (Constitution XVI). When
- * `showSender` is true (first of a consecutive same-sender run) the sender
- * name and bubble tail are shown; later messages of the run group tightly.
+ * A single conversation bubble — WhatsApp-accurate presentation. Outgoing
+ * messages sit on the right, incoming on the left. Text direction is resolved
+ * per message. When `showSender` is true (first of a consecutive same-sender
+ * run) the sender name and bubble tail are shown.
  */
 export function MessageBubble({
   message,
@@ -30,12 +28,11 @@ export function MessageBubble({
   const isOutgoing = message.direction === 'sent';
   const isDeleted = message.isDeleted === true || message.type === 'deleted';
 
-  // HH:MM:SS timestamps (FR-010).
+  // h:mm AM/PM format matching WhatsApp reference
   const time = new Intl.DateTimeFormat(LOCALES[language] ?? language, {
-    hour: '2-digit',
+    hour: 'numeric',
     minute: '2-digit',
-    second: '2-digit',
-    hour12: false,
+    hour12: true,
   }).format(new Date(message.timestampIso));
 
   const senderName = isOutgoing
@@ -60,16 +57,35 @@ export function MessageBubble({
 
         <BubbleBody message={message} isDeleted={isDeleted} projectId={projectId} />
 
-        <div className="cf-bubble__meta">
+        <span className="cf-bubble__meta">
           {!isDeleted && message.isEdited === true && (
             <span className="cf-bubble__edited">{t.preview.edited}</span>
           )}
           <time className="cf-bubble__time" dateTime={message.timestampIso}>
             {time}
           </time>
-        </div>
+          {isOutgoing && !isDeleted && <ReadReceipt />}
+        </span>
       </div>
     </div>
+  );
+}
+
+/** Blue double-check read receipt for outgoing messages. */
+function ReadReceipt() {
+  return (
+    <span className="cf-bubble__receipt cf-bubble__receipt--read" aria-label="Read">
+      <svg viewBox="0 0 16 11" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path
+          d="M11.07 0.66L4.98 6.75L2.91 4.68L1.5 6.09L4.98 9.57L12.48 2.07L11.07 0.66Z"
+          fill="currentColor"
+        />
+        <path
+          d="M14.07 0.66L7.98 6.75L7.01 5.79L5.6 7.2L7.98 9.57L15.48 2.07L14.07 0.66Z"
+          fill="currentColor"
+        />
+      </svg>
+    </span>
   );
 }
 
@@ -84,7 +100,6 @@ function BubbleBody({
 }) {
   const t = useTranslations();
 
-  // Deleted treatment replaces the body but the message stays visible (FR-013).
   if (isDeleted) {
     return <p className="cf-bubble__body">{t.preview.deletedMessage}</p>;
   }

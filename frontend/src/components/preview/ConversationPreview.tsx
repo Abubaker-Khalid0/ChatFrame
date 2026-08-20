@@ -5,6 +5,7 @@ import {
   PRIVACY_NAME_PLACEHOLDER,
   applyPrivacyToMessageRow,
   displayNameFor,
+  phoneFromWhatsAppId,
   phoneNumberFor,
   type MessageRow,
   type PaginatedPreviewResponse,
@@ -26,16 +27,6 @@ const DEFAULT_OVERSCAN = 5;
 
 /** Estimated row height before measurement (a one-line text bubble). */
 const ESTIMATED_ROW_HEIGHT = 56;
-
-/**
- * Presents a WhatsApp-style id's numeric user part as an international phone
- * number, mirroring the chat picker's presentation (`+<digits>`); returns
- * `undefined` for non-numeric ids (e.g. mock fixtures).
- */
-function participantPhone(id: string): string | undefined {
-  const user = id.split('@')[0];
-  return user !== undefined && /^\d+$/.test(user) ? `+${user}` : undefined;
-}
 
 /**
  * Virtualized conversation panel (008 FR-007/009/017/020/021/023/026/029/030).
@@ -277,7 +268,10 @@ function ConversationHeader({ contact }: { contact: Participant }) {
 
   const resolvedName = displayNameFor(contact.displayName, contact.isMe, privacy);
   const name = resolvedName === PRIVACY_NAME_PLACEHOLDER ? t.preview.contact : resolvedName;
-  const phone = phoneNumberFor(participantPhone(contact.id), privacy);
+  // Prefer the real number resolved during normalization; fall back to one
+  // derived from a phone-based id for older data. A `@lid` privacy id never
+  // yields a number, so it is never shown (or mistaken for one).
+  const phone = phoneNumberFor(contact.phoneNumber ?? phoneFromWhatsAppId(contact.id), privacy);
 
   return (
     <div className="cf-chat__header">

@@ -83,6 +83,40 @@ describe('createProject (FR-001, FR-002, SC-001)', () => {
     expect(second.projectId).toBe('chatframe_2026-06-10_أحمد-2');
   });
 
+  it('never uses a @lid id as the project name or stored chat name', async () => {
+    const request: CreateProjectRequest = {
+      chatId: '222436708581508@lid',
+      chatDisplayName: null,
+      chatPhoneNumber: null,
+      adapter: 'whatsapp-web.js',
+    };
+    const { projectId, displayName } = await createProject(request, {
+      projectsDir,
+      now: FIXED_NOW,
+    });
+    expect(displayName).toBe('Contact');
+    expect(projectId).not.toContain('222436708581508');
+    expect(projectId).not.toContain('@lid');
+
+    const manifest = await readJson(
+      manifestPath(join(projectsDir, projectId)),
+      ProjectManifestSchema,
+    );
+    expect(manifest.displayName).toBe('Contact');
+    expect(manifest.chatDisplayName).toBeNull();
+  });
+
+  it('derives the project name from a phone-based chat id when no name is given', async () => {
+    const request: CreateProjectRequest = {
+      chatId: '201234567890@c.us',
+      chatDisplayName: null,
+      chatPhoneNumber: null,
+      adapter: 'whatsapp-web.js',
+    };
+    const { displayName } = await createProject(request, { projectsDir, now: FIXED_NOW });
+    expect(displayName).toBe('+201234567890');
+  });
+
   it('defaults adapterVersion to null when omitted', async () => {
     const request: CreateProjectRequest = {
       chatId: '201234567890@c.us',

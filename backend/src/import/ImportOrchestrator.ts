@@ -198,7 +198,7 @@ export async function startImport(options: StartImportOptions): Promise<ImportRu
         chatId: options.request.chatId,
         chatDisplayName: options.request.chatDisplayName ?? null,
         chatPhoneNumber: options.request.chatPhoneNumber ?? null,
-        adapter: options.adapterName ?? (env.MOCK_MODE ? 'mock' : 'whatsapp-web.js'),
+        adapter: options.adapterName ?? (env.MOCK_MODE ? 'mock' : 'baileys'),
       },
       { projectsDir, now: startedAtDate },
     );

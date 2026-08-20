@@ -8,7 +8,7 @@ export function MissingImageNotice({ count }: { count: number }) {
   }
 
   return (
-    <p className="rounded-md bg-blue-50 px-3 py-2 text-sm text-blue-800">
+    <p className="rounded-md bg-info-soft px-3 py-2 text-sm text-ink-secondary">
       {count} {t.quality.missingImagesNotice}
     </p>
   );

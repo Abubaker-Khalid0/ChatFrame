@@ -28,9 +28,9 @@ export function QualityMetricCards({ report }: { report: QualityReport }) {
   return (
     <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3">
       {cards.map((card) => (
-        <li key={card.label} className="rounded-lg border border-gray-200 bg-gray-50 p-3">
-          <p className="text-xs font-medium text-gray-500">{card.label}</p>
-          <p className="mt-1 text-lg font-semibold text-gray-900">{card.value}</p>
+        <li key={card.label} className="rounded-lg border border-line bg-surface-muted p-3">
+          <p className="text-xs font-medium text-ink-muted">{card.label}</p>
+          <p className="mt-1 text-lg font-semibold text-ink">{card.value}</p>
         </li>
       ))}
     </ul>

@@ -1,25 +1,23 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { cleanup, render } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { WelcomePage } from './pages/WelcomePage';
-import { ImportPage } from './pages/ImportPage';
-import { ExportCompletePage } from './pages/ExportCompletePage';
-import { StepHeader } from './components/layout/StepHeader';
+import { WelcomeStage } from './dashboard/stages/WelcomeStage';
+import { ImportConfigStage } from './dashboard/stages/ImportConfigStage';
+import { ExportCompleteStage } from './dashboard/stages/ExportCompleteStage';
+import { WorkflowRail } from './dashboard/WorkflowRail';
 import { ErrorState } from './components/common/ErrorState';
 import { EmptyState } from './components/common/EmptyState';
 import { useLanguageStore } from './stores/useLanguageStore';
+import { useWorkflowStore } from './stores/useWorkflowStore';
 
 /**
- * 010 T059 — keyboard navigation audit (research §12).
- *
- * jsdom has no layout engine, so real Tab traversal cannot be simulated;
- * instead this audit verifies the invariants that make keyboard-only use
- * work: every interactive element is reachable (no `tabindex="-1"` on
- * actionable controls), none jumps the queue (no positive `tabindex`, so
- * focus order === logical DOM order), every control has an accessible name,
- * and the global `:focus-visible` styles exist.
+ * Keyboard navigation audit (research §12), retargeted to the unified
+ * dashboard. jsdom has no layout engine, so real Tab traversal cannot be
+ * simulated; this audit verifies the invariants that make keyboard-only use
+ * work: every interactive element is reachable (no positive tabindex, so focus
+ * order === DOM order), every enabled control has an accessible name, and the
+ * global `:focus-visible` styles exist.
  */
 
 const FOCUSABLE_SELECTOR = 'button, a[href], input, select, textarea, [tabindex]';
@@ -52,13 +50,14 @@ function auditFocusables(container: HTMLElement, screenName: string): void {
 
 beforeEach(() => {
   useLanguageStore.getState().setLanguage('en');
+  useWorkflowStore.getState().reset();
 });
 
 afterEach(() => {
   cleanup();
 });
 
-describe('keyboard navigation audit (010 T059)', () => {
+describe('keyboard navigation audit (dashboard)', () => {
   it('global :focus-visible styles are defined for interactive elements', () => {
     const css = readFileSync(join(__dirname, 'styles', 'globals.css'), 'utf8');
     expect(css).toMatch(/button:focus-visible/);
@@ -67,52 +66,29 @@ describe('keyboard navigation audit (010 T059)', () => {
     expect(css).toMatch(/outline:\s*2px solid/);
   });
 
-  it('WelcomePage controls are keyboard reachable in logical order', () => {
-    const { container } = render(
-      <MemoryRouter>
-        <WelcomePage />
-      </MemoryRouter>,
-    );
-    auditFocusables(container, 'WelcomePage');
+  it('WelcomeStage controls are keyboard reachable in logical order', () => {
+    const { container } = render(<WelcomeStage />);
+    auditFocusables(container, 'WelcomeStage');
   });
 
-  it('ImportPage (options + empty state) controls are keyboard reachable', () => {
-    const { container } = render(
-      <MemoryRouter
-        initialEntries={[
-          {
-            pathname: '/import',
-            state: { chat: { id: 'c', displayName: 'L', phoneNumber: null } },
-          },
-        ]}
-      >
-        <Routes>
-          <Route path="/import" element={<ImportPage />} />
-        </Routes>
-      </MemoryRouter>,
-    );
-    auditFocusables(container, 'ImportPage');
+  it('ImportConfigStage (options + empty state) controls are keyboard reachable', () => {
+    useWorkflowStore.setState({
+      selectedChat: { id: 'c', displayName: 'L', phoneNumber: null },
+      stage: 'import-config',
+    });
+    const { container } = render(<ImportConfigStage />);
+    auditFocusables(container, 'ImportConfigStage');
 
     cleanup();
-    const empty = render(
-      <MemoryRouter initialEntries={[{ pathname: '/import', state: null }]}>
-        <Routes>
-          <Route path="/import" element={<ImportPage />} />
-        </Routes>
-      </MemoryRouter>,
-    );
-    auditFocusables(empty.container, 'ImportPage (no chat)');
+    useWorkflowStore.setState({ selectedChat: null });
+    const empty = render(<ImportConfigStage />);
+    auditFocusables(empty.container, 'ImportConfigStage (no chat)');
   });
 
-  it('ExportCompletePage missing-result state is keyboard recoverable', () => {
-    const { container } = render(
-      <MemoryRouter initialEntries={[{ pathname: '/export/complete', state: null }]}>
-        <Routes>
-          <Route path="/export/complete" element={<ExportCompletePage />} />
-        </Routes>
-      </MemoryRouter>,
-    );
-    auditFocusables(container, 'ExportCompletePage');
+  it('ExportCompleteStage missing-result state is keyboard recoverable', () => {
+    useWorkflowStore.setState({ projectId: null, exportResult: null, stage: 'export-complete' });
+    const { container } = render(<ExportCompleteStage />);
+    auditFocusables(container, 'ExportCompleteStage');
   });
 
   it('shared Error/Empty state action buttons are keyboard reachable', () => {
@@ -131,13 +107,12 @@ describe('keyboard navigation audit (010 T059)', () => {
     auditFocusables(container, 'shared states');
   });
 
-  it('the wizard StepHeader exposes the progress position to screen readers', () => {
-    const { container } = render(
-      <MemoryRouter initialEntries={['/quality']}>
-        <StepHeader />
-      </MemoryRouter>,
-    );
+  it('the workflow rail exposes the active step and a labeled nav to screen readers', () => {
+    useWorkflowStore.setState({ projectId: 'p', stage: 'quality' });
+    const { container } = render(<WorkflowRail />);
     const nav = container.querySelector('nav');
-    expect(nav?.getAttribute('aria-label')).toMatch(/Step 3 of 5/);
+    expect(nav?.getAttribute('aria-label')).toBe('Workflow');
+    expect(container.querySelector('[aria-current="step"]')).not.toBeNull();
+    auditFocusables(container, 'WorkflowRail');
   });
 });

@@ -16,3 +16,4 @@ export * from './session';
 export * from './shell';
 export * from './view-settings';
 export * from './privacy';
+export * from './identity';

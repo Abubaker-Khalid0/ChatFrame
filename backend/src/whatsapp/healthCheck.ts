@@ -1,32 +1,14 @@
-import { createRequire } from 'node:module';
 import type { HealthCheckResult } from '@chatframe/shared';
 import { env } from '../config/env';
 
 /**
- * Chromium/Puppeteer health check (FR-024, SC-012): a lightweight launch that
- * verifies the headless browser can start before the user is offered the
- * "Connect" button. In mock mode no browser is needed, so the check passes
- * immediately.
+ * Health check (FR-024, SC-012): verifies that the WhatsApp integration
+ * backend is ready to accept connections. With Baileys (WebSocket-based),
+ * there is no Chromium dependency — the check validates that the Node.js
+ * process can establish outbound network connections.
  *
- * Puppeteer is a dependency of `whatsapp-web.js` (not a direct dependency of
- * the backend — research §2), so it is resolved through the library's own
- * module tree to guarantee the exact version the adapter will use.
+ * In mock mode the check passes immediately.
  */
-
-interface MinimalBrowser {
-  close(): Promise<void>;
-}
-
-interface MinimalPuppeteer {
-  launch(options?: { headless?: boolean }): Promise<MinimalBrowser>;
-}
-
-function loadPuppeteer(): MinimalPuppeteer {
-  const requireHere = createRequire(import.meta.url);
-  const wwebjsEntry = requireHere.resolve('whatsapp-web.js');
-  const requireFromWwebjs = createRequire(wwebjsEntry);
-  return requireFromWwebjs('puppeteer') as MinimalPuppeteer;
-}
 
 /** Runs the health check and returns a project-owned result (never throws). */
 export async function runHealthCheck(): Promise<HealthCheckResult> {
@@ -36,15 +18,14 @@ export async function runHealthCheck(): Promise<HealthCheckResult> {
     return { available: true, checkedAt, error: null };
   }
 
+  // Baileys uses WebSocket — no Chromium launch needed. Verify basic network
+  // connectivity by checking that we can resolve the WhatsApp server hostname.
   try {
-    const puppeteer = loadPuppeteer();
-    const browser = await puppeteer.launch({ headless: true });
-    await browser.close();
+    const { promises: dns } = await import('node:dns');
+    await dns.resolve4('web.whatsapp.com');
     return { available: true, checkedAt, error: null };
   } catch (error) {
-    // Diagnostic detail stays server-side for debugging (FR-025); the routes
-    // surface only a user-friendly message.
     const message = error instanceof Error ? error.message : String(error);
-    return { available: false, checkedAt, error: `Failed to launch Chromium: ${message}` };
+    return { available: false, checkedAt, error: `Network check failed: ${message}` };
   }
 }

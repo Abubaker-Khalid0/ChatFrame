@@ -11,6 +11,12 @@ export const ParticipantSchema = z.object({
   id: z.string().min(1),
   /** Human-readable name (latest non-empty variant, else the id). */
   displayName: z.string().min(1),
+  /**
+   * Real phone number (formatted `+<digits>`) resolved from the source
+   * contact, when available. Absent when the source hides it (e.g. WhatsApp
+   * `@lid` privacy ids), so the UI shows no number rather than a fake one.
+   */
+  phoneNumber: z.string().optional(),
   /** True for the local user (derived from `isFromMe`). */
   isMe: z.boolean(),
 });

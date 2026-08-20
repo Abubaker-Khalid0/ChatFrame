@@ -2,13 +2,13 @@ import { Writable } from 'node:stream';
 import { describe, expect, it } from 'vitest';
 import {
   ExportSettingsSchema,
+  PRIVACY_NAME_PLACEHOLDER,
   type ExportSettings,
   type RenderEntry,
   type RenderModel,
 } from '@chatframe/shared';
 import {
   messageDirection,
-  participantPhone,
   renderConversationHtml,
   type ExportLocale,
 } from './renderConversationHtml';
@@ -409,9 +409,62 @@ describe('messageDirection (ported, FR-022)', () => {
   });
 });
 
-describe('participantPhone (ported)', () => {
-  it('formats a numeric WhatsApp id and rejects non-numeric ids', () => {
-    expect(participantPhone('15551234567@c.us')).toBe('+15551234567');
-    expect(participantPhone('mock-contact')).toBeUndefined();
+describe('contact identity (no @lid / serialized id leaks)', () => {
+  const LID = '222436708581508@lid';
+
+  /** A model whose contact is a privacy `@lid` id (no resolved name/number). */
+  function lidModel(participant: Partial<{ displayName: string; phoneNumber: string }> = {}) {
+    return {
+      projectId: 'proj-1',
+      chatId: 'chat-1',
+      participants: [
+        { id: ME, displayName: 'Me', isMe: true },
+        {
+          id: LID,
+          displayName: participant.displayName ?? PRIVACY_NAME_PLACEHOLDER,
+          isMe: false,
+          ...(participant.phoneNumber !== undefined
+            ? { phoneNumber: participant.phoneNumber }
+            : {}),
+        },
+      ],
+      entries: [textRow({ senderId: LID })],
+      totalMessages: 1,
+    } satisfies RenderModel;
+  }
+
+  it('never derives a phone number from a @lid id, even with phone shown', async () => {
+    const html = await render(lidModel(), ExportSettingsSchema.parse({ showPhoneNumber: true }));
+    expect(html).not.toContain('cf-chat__header-phone');
+    expect(html).not.toContain('222436708581508');
+  });
+
+  it('localizes the neutral placeholder instead of showing the @lid id as a name', async () => {
+    const html = await render(lidModel());
+    expect(html).toContain('<div class="cf-chat__header-name" dir="auto">Contact</div>');
+    expect(html).not.toContain('@lid');
+  });
+
+  it('shows the real resolved name and number for a @lid contact when present', async () => {
+    const html = await render(
+      lidModel({ displayName: 'Sarah Johnson', phoneNumber: '+15551234567' }),
+      ExportSettingsSchema.parse({ showPhoneNumber: true }),
+    );
+    expect(html).toContain('<div class="cf-chat__header-name" dir="auto">Sarah Johnson</div>');
+    expect(html).toContain('<div class="cf-chat__header-phone">+15551234567</div>');
+  });
+
+  it("prefers the participant's resolved phoneNumber over one derived from the id", async () => {
+    const withPhone: RenderModel = {
+      ...model([textRow()]),
+      participants: [
+        { id: ME, displayName: 'Me', isMe: true },
+        { id: CONTACT, displayName: 'Sara', isMe: false, phoneNumber: '+19998887777' },
+      ],
+    };
+    const html = await render(withPhone, ExportSettingsSchema.parse({ showPhoneNumber: true }));
+    expect(html).toContain('<div class="cf-chat__header-phone">+19998887777</div>');
+    // The id-derived number (+15551234567) must not win over the resolved one.
+    expect(html).not.toContain('+15551234567');
   });
 });

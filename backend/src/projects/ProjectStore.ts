@@ -1,12 +1,14 @@
 import { mkdir, readdir } from 'node:fs/promises';
 import { join } from 'node:path';
-import type {
-  CreateProjectRequest,
-  CreateProjectResponse,
-  ProjectManifest,
-  ProjectManifestResponse,
-  RenameProjectResponse,
-  SourceMetadata,
+import {
+  phoneFromWhatsAppId,
+  sanitizeContactName,
+  type CreateProjectRequest,
+  type CreateProjectResponse,
+  type ProjectManifest,
+  type ProjectManifestResponse,
+  type RenameProjectResponse,
+  type SourceMetadata,
 } from '@chatframe/shared';
 import { PROJECTS_DIR } from '../config/paths';
 import { ProjectNotFoundError, StorageError } from '../utils/errors';
@@ -36,9 +38,22 @@ export interface CreateProjectOptions {
   now?: Date;
 }
 
-/** Derives a human-readable display name from the available chat identifiers. */
+/** Neutral display name when a chat has neither a real name nor number. */
+const FALLBACK_DISPLAY_NAME = 'Contact';
+
+/**
+ * Derives a human-readable display name from the available chat identifiers,
+ * never the serialized chat id: a saved name, then the phone number, then a
+ * number derived from a phone-based id, and finally a neutral placeholder. A
+ * `@lid` privacy id therefore never leaks into the project name or folder.
+ */
 function resolveDisplayName(input: CreateProjectRequest): string {
-  return input.chatDisplayName ?? input.chatPhoneNumber ?? input.chatId;
+  return (
+    sanitizeContactName(input.chatDisplayName) ??
+    input.chatPhoneNumber ??
+    phoneFromWhatsAppId(input.chatId) ??
+    FALLBACK_DISPLAY_NAME
+  );
 }
 
 /** Lists existing folder names under `projectsDir`, tolerating a missing dir. */
@@ -69,6 +84,9 @@ export async function createProject(
   const date = createdAt.slice(0, 10); // YYYY-MM-DD
 
   const displayName = resolveDisplayName(input);
+  // Persist a sanitized contact name so an opaque id (e.g. `<digits>@lid`) is
+  // never stored as the chat's name in the project metadata.
+  const chatDisplayName = sanitizeContactName(input.chatDisplayName);
   const desiredFolder = buildFolderName(date, displayName);
 
   const existing = await listExistingFolders(projectsDir);
@@ -91,14 +109,14 @@ export async function createProject(
     displayName,
     createdAt,
     chatId: input.chatId,
-    chatDisplayName: input.chatDisplayName,
+    chatDisplayName,
     chatPhoneNumber: input.chatPhoneNumber,
   });
 
   const source: SourceMetadata = {
     adapter: input.adapter,
     chatId: input.chatId,
-    chatDisplayName: input.chatDisplayName,
+    chatDisplayName,
     importedAt: createdAt,
     adapterVersion: input.adapterVersion ?? null,
   };

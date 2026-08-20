@@ -3,6 +3,7 @@ import type { Writable } from 'node:stream';
 import {
   applyPrivacyToMessageRow,
   applyPrivacyToParticipants,
+  phoneFromWhatsAppId,
   phoneNumberFor,
   PRIVACY_NAME_PLACEHOLDER,
   type ExportSettings,
@@ -368,16 +369,6 @@ function renderWatermark(): string {
   return `<footer class="cf-watermark" style="${WATERMARK_STYLE}">${escapeText(WATERMARK_TEXT)}</footer>`;
 }
 
-/**
- * Presents a WhatsApp-style id's numeric user part as an international phone
- * number, mirroring the preview's `participantPhone`; `undefined` for
- * non-numeric ids (e.g. mock fixtures).
- */
-export function participantPhone(id: string): string | undefined {
-  const user = id.split('@')[0];
-  return user !== undefined && /^\d+$/.test(user) ? `+${user}` : undefined;
-}
-
 /* ------------------------------------------------------------------ main -- */
 
 /** Writes a chunk, awaiting drain when the stream signals backpressure. */
@@ -427,8 +418,12 @@ export async function renderConversationHtml(
     contact === undefined || contact.displayName === PRIVACY_NAME_PLACEHOLDER
       ? CHROME_STRINGS[locale].contact
       : contact.displayName;
+  // Prefer the real number resolved during normalization; fall back to one
+  // derived from a phone-based id. A `@lid` privacy id never yields a number.
   const contactPhone =
-    contact !== undefined ? phoneNumberFor(participantPhone(contact.id), privacy) : undefined;
+    contact !== undefined
+      ? phoneNumberFor(contact.phoneNumber ?? phoneFromWhatsAppId(contact.id), privacy)
+      : undefined;
 
   await write(
     out,

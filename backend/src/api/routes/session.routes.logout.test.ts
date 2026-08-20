@@ -30,11 +30,11 @@ let sessionDir: string;
 let captured: CapturedEvent[];
 let unregister: (() => void) | null = null;
 
-/** Seeds a saved session file under the whatsapp-web-js session path. */
+/** Seeds a saved session file under the Baileys auth session path. */
 async function seedSession(contents: string): Promise<void> {
-  const dir = join(sessionDir, 'whatsapp-web-js');
+  const dir = join(sessionDir, 'baileys-auth');
   await mkdir(dir, { recursive: true });
-  await writeFile(join(dir, 'session.json'), contents, 'utf8');
+  await writeFile(join(dir, 'creds.json'), contents, 'utf8');
 }
 
 beforeEach(async () => {

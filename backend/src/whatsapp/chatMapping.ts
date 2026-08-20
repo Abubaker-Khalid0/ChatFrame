@@ -1,4 +1,4 @@
-import type { ChatSummary } from '@chatframe/shared';
+import { sanitizeContactName, type ChatSummary } from '@chatframe/shared';
 
 /**
  * Pure mapping helpers between adapter-shaped chat data and the project-owned
@@ -45,7 +45,11 @@ export interface RawChatInfo {
   id: string;
   name: string | null;
   isGroup: boolean;
-  /** User part of the chat id (the MSISDN for one-to-one chats), or `null`. */
+  /**
+   * Real phone number digits (MSISDN) for a one-to-one chat, resolved from the
+   * source contact, or `null` when unavailable. For `@lid` privacy ids this is
+   * the actual number rather than the opaque id's user part.
+   */
   user: string | null;
   timestamp: number | null;
   lastMessage: RawLastMessage | null;
@@ -117,7 +121,8 @@ export function sortByRecency(chats: ChatSummary[]): ChatSummary[] {
 export function toChatSummary(raw: RawChatInfo): ChatSummary {
   const summary: ChatSummary = {
     id: raw.id,
-    displayName: raw.name ?? null,
+    // Sanitized so a serialized id (e.g. `<digits>@lid`) never becomes the name.
+    displayName: sanitizeContactName(raw.name),
     phoneNumber: raw.isGroup ? null : resolvePhoneNumber(raw.user),
     isGroup: raw.isGroup,
   };

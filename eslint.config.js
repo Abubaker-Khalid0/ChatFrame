@@ -12,7 +12,10 @@ export default tseslint.config(
       '**/build/**',
       '**/out/**',
       '**/coverage/**',
+      '**/.vite/**',
       '**/*.tsbuildinfo',
+      // Local design prototype (standalone Next.js scaffold, not workspace source)
+      'chatframe/**',
     ],
   },
   js.configs.recommended,
